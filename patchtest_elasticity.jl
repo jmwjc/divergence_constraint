@@ -1,5 +1,4 @@
 
-using BenchmarkTools
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫∫εᵢⱼσᵢⱼdxdy, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, ∫vᵢgᵢds, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 

@@ -5,9 +5,10 @@ using ApproxOperator.Heat: ∫∫qᵢpᵢdxdy, ∫pᵢnᵢuds, ∫∫∇𝒑udxd
 
 include("import_patchtest.jl")
 
-ndiv = 8
-nᵤ = 49
-elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_u_"*string(nᵤ)*".msh")
+ndiv = 2
+nᵤ = 28
+# elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
+elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
 
 nₚ = length(nodes)
 
