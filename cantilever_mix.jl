@@ -1,18 +1,21 @@
 
-using TimerOutputs, Alert
-using SparseArrays
+using TimerOutputs 
+using SparseArrays, Pardiso
 using CairoMakie
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫δsᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_cantilever.jl")
 
 const to = TimerOutput()
+ps = MKLPardisoSolver()
 
-ndiv = 16
-nₚ = 1058
+ndiv = 8
+nₚ = 136
+poly = "tri3"
+# poly = "quad"
 @timeit to "import data" begin
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_tri3_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
 end
 
 nₑ = length(elements["Ωᵘ"])
@@ -23,8 +26,9 @@ L = 48.0
 D = 12.0
 P = 1000
 E = 3e6
-ν = 0.3
-# ν = 0.4999999
+# E = 1.0
+ν = 0.5-1e-8
+# ν = 0.3
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12
@@ -51,8 +55,8 @@ prescribe!(elements["Ωˢ"],:E=>(x,y,z)->E, index=:𝑔)
 prescribe!(elements["Ωˢ"],:ν=>(x,y,z)->ν, index=:𝑔)
 prescribe!(elements["Ωᵖ"],:E=>(x,y,z)->E, index=:𝑔)
 prescribe!(elements["Ωᵖ"],:ν=>(x,y,z)->ν, index=:𝑔)
-prescribe!(elements["Ωᵍᵘ"],:E=>(x,y,z)->Ē, index=:𝑔)
-prescribe!(elements["Ωᵍᵘ"],:ν=>(x,y,z)->ν̄, index=:𝑔)
+prescribe!(elements["Ωᵍᵘ"],:E=>(x,y,z)->E, index=:𝑔)
+prescribe!(elements["Ωᵍᵘ"],:ν=>(x,y,z)->ν, index=:𝑔)
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
 prescribe!(elements["Γʳ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
@@ -71,7 +75,7 @@ prescribe!(elements["Ωᵍᵘ"],:∂v∂y=>(x,y,z)->∂v∂y(x,y))
 prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->(σ₁₁(x,y)+σ₂₂(x,y)+σ₃₃(x,y))/3)
 
 ## Debug
-# n = 3
+# n = 1
 # u(x,y) = (1+2*x+3*y)^n
 # v(x,y) = (4+5*x+6*y)^n
 # ∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
@@ -135,7 +139,7 @@ prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->(σ₁₁(x,y)+σ₂₂(x,y)+σ₃�
 # prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 ## End debug
 
-𝑎ˢ = ∫∫δsᵢⱼsᵢⱼdxdy=>elements["Ωˢ"]
+𝑎ˢ = ∫∫sᵢⱼsᵢⱼdxdy=>elements["Ωˢ"]
 𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
 𝑏ˢ = ∫∫sᵢⱼεᵢⱼdxdy=>(elements["Ωˢ"],elements["Ωᵘ"])
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
@@ -172,69 +176,75 @@ fᵘ = zeros(2*nᵤ)
 𝑏ᵖᵅ(kᵖᵘ,fᵖ)
 𝑓(fᵘ)
 end
+# k = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ]
 k = sparse([zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ])
-f = [fᵘ;fᵖ;fˢ]
-d = k\f
-# @timeit to "solve" d = sparse([zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ])\sparse([fᵘ;fᵖ;fˢ])
+f = [-fᵘ;fᵖ;fˢ]
+d = zeros(2*nᵤ+nₚ+4*nₛ*nₑ)
+# d = k\f
 
-# 𝑢₁ = d[1:2:2*nᵤ]
-# 𝑢₂ = d[2:2:2*nᵤ]
-# 𝑝 = d[2*nᵤ+1:2*nᵤ+nₚ]
-# push!(nodes,:d₁=>𝑢₁)
-# push!(nodes,:d₂=>𝑢₂)
-# push!(nodes_p,:p=>𝑝)
+set_matrixtype!(ps, -2)
+k = get_matrix(ps,k,:N)
+# @timeit to "solve" d = k\f
+@timeit to "solve" pardiso(ps,d,k,f)
+# @timeit to "solve" d = solve(ps, k, f)
 
-# @timeit to "compute error" begin
-# Hₑ_𝒖, L₂_𝒖 = Hₑ_PlaneStress(elements["Ωᵍᵘ"])
-# Hₑ_dev = Hₑ_PlaneStrain_Deviatoric(elements["Ωᵍᵘ"])
-# L₂_𝑝 = L₂𝑝(elements["Ωᵍᵖ"])
-# end
+𝑢₁ = d[1:2:2*nᵤ]
+𝑢₂ = d[2:2:2*nᵤ]
+𝑝 = d[2*nᵤ+1:2*nᵤ+nₚ]
+push!(nodes,:d₁=>𝑢₁)
+push!(nodes,:d₂=>𝑢₂)
+push!(nodes_p,:p=>𝑝)
 
-# println(log10(L₂_𝒖))
-# println(log10(Hₑ_𝒖))
-# println(log10(Hₑ_dev))
-# println(log10(L₂_𝑝))
+@timeit to "compute error" begin
+Hₑ_𝒖, L₂_𝒖 = Hₑ_PlaneStress(elements["Ωᵍᵘ"])
+Hₑ_dev = Hₑ_PlaneStrain_Deviatoric(elements["Ωᵍᵘ"])
+L₂_𝑝 = L₂𝑝(elements["Ωᵍᵖ"])
+end
 
-# @timeit to "plot figure" begin
-# fig = Figure()
-# ind = 100
-# ax = Axis(fig[1,1], 
-#     aspect = DataAspect(), 
-#     xticksvisible = false,
-#     xticklabelsvisible=false, 
-#     yticksvisible = false, 
-#     yticklabelsvisible=false,
-# )
-# hidespines!(ax)
-# hidedecorations!(ax)
-# xs = LinRange(0, 48, 4*ind)
-# ys = LinRange(-6, 6, ind)
-# zs = zeros(4*ind,ind)
-# 𝗠 = zeros(21)
-# for (i,x) in enumerate(xs)
-#     for (j,y) in enumerate(ys)
-#         indices = sp(x,y,0.0)
-#         ni = length(indices)
-#         𝓒 = [nodes_p[i] for i in indices]
-#         data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-#         ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-#         𝓖 = [ξ]
-#         a = type(𝓒,𝓖)
-#         set𝝭!(a)
-#         p = 0.0
-#         N = ξ[:𝝭]
-#         for (k,xₖ) in enumerate(𝓒)
-#             p += N[k]*xₖ.p
-#         end
-#         zs[i,j] = p
-#     end
-# end
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
-# # Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# # save("./png/cantilever_mix_tri3_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-# end
+println(log10(L₂_𝒖))
+println(log10(Hₑ_𝒖))
+println(log10(Hₑ_dev))
+println(log10(L₂_𝑝))
+
+@timeit to "plot figure" begin
+fig = Figure()
+ind = 100
+ax = Axis(fig[1,1], 
+    aspect = DataAspect(), 
+    xticksvisible = false,
+    xticklabelsvisible=false, 
+    yticksvisible = false, 
+    yticklabelsvisible=false,
+)
+hidespines!(ax)
+hidedecorations!(ax)
+xs = LinRange(0, 48, 4*ind)
+ys = LinRange(-6, 6, ind)
+zs = zeros(4*ind,ind)
+𝗠 = zeros(21)
+for (i,x) in enumerate(xs)
+    for (j,y) in enumerate(ys)
+        indices = sp(x,y,0.0)
+        ni = length(indices)
+        𝓒 = [nodes_p[i] for i in indices]
+        data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+        ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+        𝓖 = [ξ]
+        a = type(𝓒,𝓖)
+        set𝝭!(a)
+        p = 0.0
+        N = ξ[:𝝭]
+        for (k,xₖ) in enumerate(𝓒)
+            p += N[k]*xₖ.p
+        end
+        zs[i,j] = p
+    end
+end
+surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
+contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
+# Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
+# save("./png/cantilever_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
+end
 
 show(to)
-# alert("done")
-# fig
+fig

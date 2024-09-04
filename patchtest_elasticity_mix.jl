@@ -1,22 +1,23 @@
 
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫δsᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_patchtest.jl")
 
 ndiv = 8
-nₚ = 49
+nₚ = 28
 elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
 # elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_"*string(ndiv)*".msh")
 
 nₑ = length(elements["Ωᵘ"])
-nₛ = 3
+nₛ = 1
 nᵤ = length(nodes)
 
 E = 1.0
-ν = 0.3
+# ν = 0.3
+ν = 0.4999999
 
-n = 1
+n = 5
 u(x,y) = (1+2*x+3*y)^n
 v(x,y) = (4+5*x+6*y)^n
 ∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
@@ -86,7 +87,7 @@ prescribe!(elements["Ωᵍᵘ"],:u=>(x,y,z)->u(x,y))
 prescribe!(elements["Ωᵍᵘ"],:v=>(x,y,z)->v(x,y))
 prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 
-𝑎ˢ = ∫∫δsᵢⱼsᵢⱼdxdy=>elements["Ωˢ"]
+𝑎ˢ = ∫∫sᵢⱼsᵢⱼdxdy=>elements["Ωˢ"]
 𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
 𝑏ˢ = ∫∫sᵢⱼεᵢⱼdxdy=>(elements["Ωˢ"],elements["Ωᵘ"])
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
@@ -120,4 +121,6 @@ push!(nodes,:d₂=>𝑢₂)
 push!(nodes_p,:p=>𝑝)
 
 L₂_𝑢 = L₂(elements["Ωᵍᵘ"])
-L₂_𝒑 = L₂𝑝(elements["Ωᵍᵖ"])
+L₂_𝑝 = L₂𝑝(elements["Ωᵍᵖ"])
+println(log10(L₂_𝑢))
+println(log10(L₂_𝑝))

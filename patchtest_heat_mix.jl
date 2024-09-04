@@ -1,20 +1,19 @@
 
 using BenchmarkTools
 using ApproxOperator
-using ApproxOperator.Heat: ∫∫qᵢpᵢdxdy, ∫pᵢnᵢuds, ∫∫∇𝒑udxdy, ∫pᵢnᵢgⱼds, ∫vbdΩ, ∫vgdΓ, L₂, L₂𝒑
+using ApproxOperator.Heat: ∫∫qᵢpᵢdxdy, ∫pᵢnᵢuds, ∫∫∇𝒑udxdy, ∫pᵢnᵢgⱼds, ∫vbdΩ, ∫vgdΓ, L₂, L₂𝒑, H₁
 
 include("import_patchtest.jl")
 
-ndiv = 2
-nᵤ = 28
-# elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
-elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
+ndiv = 32
+nᵤ = 1885
+elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
+# elements, nodes, nodes_u = import_patchtest_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nᵤ)*".msh")
 
 nₚ = length(nodes)
 
-n = 1
+n = 5
 u(x,y) = (x+y)^n
-v(x,y) = (x+y)^n
 ∂u∂x(x,y) = n*(x+y)^abs(n-1)
 ∂u∂y(x,y) = n*(x+y)^abs(n-1)
 ∂²u∂x²(x,y)  = n*(n-1)*(x+y)^abs(n-2)
@@ -28,6 +27,9 @@ prescribe!(elements["Γ²ᵘ"],:g=>(x,y,z)->u(x,y))
 prescribe!(elements["Γ³ᵘ"],:g=>(x,y,z)->u(x,y))
 prescribe!(elements["Γ⁴ᵘ"],:g=>(x,y,z)->u(x,y))
 prescribe!(elements["Ωᵍᵘ"],:u=>(x,y,z)->u(x,y))
+prescribe!(elements["Ωᵍᵘ"],:∂u∂x=>(x,y,z)->∂u∂x(x,y))
+prescribe!(elements["Ωᵍᵘ"],:∂u∂y=>(x,y,z)->∂u∂y(x,y))
+prescribe!(elements["Ωᵍᵘ"],:∂u∂z=>(x,y,z)->0.0)
 prescribe!(elements["Ωᵍᵖ"],:𝑝₁=>(x,y,z)->∂u∂x(x,y))
 prescribe!(elements["Ωᵍᵖ"],:𝑝₂=>(x,y,z)->∂u∂y(x,y))
 prescribe!(elements["Ωᵍᵖ"],:𝑝₃=>(x,y,z)->0.0)
@@ -60,6 +62,8 @@ push!(nodes,:p₂=>𝑝₂)
 push!(nodes,:p₃=>zeros(nₚ))
 push!(nodes_u,:d=>𝑢)
 
-L₂_𝑢 = L₂(elements["Ωᵍᵘ"])
 L₂_𝒑 = L₂𝒑(elements["Ωᵍᵖ"])
-# H₁, L₂ = H₁2D(elements["Ω"])
+H₁_𝑢, L₂_𝑢 = H₁(elements["Ωᵍᵘ"])
+println(log10(L₂_𝑢))
+println(log10(H₁_𝑢))
+println(log10(L₂_𝒑))

@@ -47,7 +47,7 @@ function import_linear_mix(filename1::String,filename2::String)
     s = 1.5*s*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 2
+    integrationOrder_Ω = 3
     integrationOrder_Ωᵍ = 8
     integrationOrder_Γ = 2
 
@@ -83,33 +83,39 @@ function import_linear_mix(filename1::String,filename2::String)
     elements["Ωᵍᵖ"] = getElements(nodes_p, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
     elements["Γᵍᵖ"] = getElements(nodes_p, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
 
-    nₘ = 21
+    nₘ = 6
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
-    push!(elements["Ωᵖ"], :𝝭)
+    push!(elements["Ωᵖ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
     push!(elements["∂Ωᵖ"], :𝝭)
     push!(elements["Γᵍᵖ"], :𝝭)
-    push!(elements["Ωᵖ"],  :𝗠=>𝗠)
+    push!(elements["Ωᵖ"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
     push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
     push!(elements["Γᵍᵖ"], :𝗠=>𝗠)
     push!(elements["Ωᵍᵖ"], :𝝭)
     push!(elements["Ωᵍᵖ"], :𝗠=>𝗠)
 
-    set𝝭!(elements["Ωᵖ"])
+    set∇𝝭!(elements["Ωᵖ"])
     set𝝭!(elements["∂Ωᵖ"])
     set𝝭!(elements["Ωᵍᵖ"])
     set𝝭!(elements["Γᵍᵖ"])
 
+    # types = PiecewisePolynomial{:Constant}
     types = PiecewisePolynomial{:Linear2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
-    push!(elements["Ωˢ"], :𝝭)
+    push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
     push!(elements["∂Ωˢ"], :𝝭)
 
-    set𝝭!(elements["Ωˢ"])
+    set∇𝝭!(elements["Ωˢ"])
     set𝝭!(elements["∂Ωˢ"])
+
+    typeb = PiecewiseParametric{:Bubble,:Tri3}
+    elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],typeb,integrationOrder_Ω)
+    push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    set∇𝝭!(elements["Ωᵇ"])
 
     gmsh.finalize()
 
