@@ -10,14 +10,14 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 8
-nₚ = 40
+ndiv = 16
+# nₚ = 40
 poly = "tri3"
 # poly = "quad"
 @timeit to "import data" begin
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*poly*"_"*string(ndiv)*".msh",4*ndiv,ndiv)
 end
-
+nₚ = length(nodes_p)
 nₑ = length(elements["Ωᵘ"])
 nₛ = 3
 nᵤ = length(nodes)
@@ -192,6 +192,7 @@ fᵘ = zeros(2*nᵤ)
 𝑏ˢᵖᵝ(kˢᵖ)
 𝑓(fᵘ)
 end
+# k = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ kˢᵖ';kˢᵘ kˢᵖ kˢˢ]
 k = sparse([zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ kˢᵖ';kˢᵘ kˢᵖ kˢˢ])
 f = [-fᵘ;fᵖ;fˢ]
 d = zeros(2*nᵤ+nₚ+4*nₛ*nₑ)

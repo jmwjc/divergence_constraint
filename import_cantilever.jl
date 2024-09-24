@@ -32,7 +32,7 @@ function import_fem(filename::String)
     return elements, nodes
 end
 
-function import_linear_mix(filename1::String,filename2::String)
+function import_linear_mix(filename1::String,filename2::String,nx,ny)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
 
@@ -43,9 +43,12 @@ function import_linear_mix(filename1::String,filename2::String)
     yᵖ = nodes_p.y
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
-    s, var𝐴 = cal_area_support(Ω)
-    s = 1.5*s*ones(length(nodes_p))
-    push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
+    # s, var𝐴 = cal_area_support(Ω)
+    # s = 1.5*s*ones(length(nodes_p))
+    s = 1.5
+    s₁ = s*48.0/nx*ones(length(nodes_p))
+    s₂ = s*12.0/ny*ones(length(nodes_p))
+    push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
 
     integrationOrder_Ω = 3
     integrationOrder_Ωᵍ = 8

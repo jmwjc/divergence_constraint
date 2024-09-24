@@ -10,12 +10,18 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 8
-nₚ = 136
-poly = "tri3"
-# poly = "quad"
+ndiv = 32
+# nₚ = 243
+# poly = "tri3"
+poly = "quad"
 @timeit to "import data" begin
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh")
+# n = 56
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+nx = 131;ny = 32
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+nₚ = length(nodes_p)
 end
 
 nₑ = length(elements["Ωᵘ"])
@@ -206,45 +212,45 @@ println(log10(Hₑ_𝒖))
 println(log10(Hₑ_dev))
 println(log10(L₂_𝑝))
 
-@timeit to "plot figure" begin
-fig = Figure()
-ind = 100
-ax = Axis(fig[1,1], 
-    aspect = DataAspect(), 
-    xticksvisible = false,
-    xticklabelsvisible=false, 
-    yticksvisible = false, 
-    yticklabelsvisible=false,
-)
-hidespines!(ax)
-hidedecorations!(ax)
-xs = LinRange(0, 48, 4*ind)
-ys = LinRange(-6, 6, ind)
-zs = zeros(4*ind,ind)
-𝗠 = zeros(21)
-for (i,x) in enumerate(xs)
-    for (j,y) in enumerate(ys)
-        indices = sp(x,y,0.0)
-        ni = length(indices)
-        𝓒 = [nodes_p[i] for i in indices]
-        data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-        ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-        𝓖 = [ξ]
-        a = type(𝓒,𝓖)
-        set𝝭!(a)
-        p = 0.0
-        N = ξ[:𝝭]
-        for (k,xₖ) in enumerate(𝓒)
-            p += N[k]*xₖ.p
-        end
-        zs[i,j] = p
-    end
-end
-surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
+# @timeit to "plot figure" begin
+# fig = Figure()
+# ind = 100
+# ax = Axis(fig[1,1], 
+#     aspect = DataAspect(), 
+#     xticksvisible = false,
+#     xticklabelsvisible=false, 
+#     yticksvisible = false, 
+#     yticklabelsvisible=false,
+# )
+# hidespines!(ax)
+# hidedecorations!(ax)
+# xs = LinRange(0, 48, 4*ind)
+# ys = LinRange(-6, 6, ind)
+# zs = zeros(4*ind,ind)
+# 𝗠 = zeros(21)
+# for (i,x) in enumerate(xs)
+#     for (j,y) in enumerate(ys)
+#         indices = sp(x,y,0.0)
+#         ni = length(indices)
+#         𝓒 = [nodes_p[i] for i in indices]
+#         data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+#         ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+#         𝓖 = [ξ]
+#         a = type(𝓒,𝓖)
+#         set𝝭!(a)
+#         p = 0.0
+#         N = ξ[:𝝭]
+#         for (k,xₖ) in enumerate(𝓒)
+#             p += N[k]*xₖ.p
+#         end
+#         zs[i,j] = p
+#     end
+# end
+# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
+# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
 # Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
 # save("./png/cantilever_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-end
+# end
 
 show(to)
-fig
+# fig

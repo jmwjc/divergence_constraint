@@ -26,7 +26,7 @@ function import_fem(filename::String)
     return elements, nodes
 end
 
-function import_linear_mix(filename1::String,filename2::String)
+function import_linear_mix(filename1::String,filename2::String,n₁::Int,n₂::Int,c₁::Float64,c₂::Float64)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
 
@@ -36,9 +36,21 @@ function import_linear_mix(filename1::String,filename2::String)
     xᵘ = nodes_u.x
     yᵘ = nodes_u.y
     zᵘ = nodes_u.z
-    Ω = getElements(nodes_u, entities["Ω"])
-    s, var𝐴 = cal_area_support(Ω)
-    s = 1.5*s*ones(length(nodes_u))
+    w = 0.0
+    for i in 0:n₁-1
+        w += c^i
+    end
+    ds₂ = 4*2^0.5/w
+    ds₁ = ds₂*c^(n-1)
+    s = zeros(length(nodes_u))
+    for (i,node) in enumerate(nodes_u) 
+        xᵢ = node.x
+        yᵢ = node.y
+        r = (xᵢ^2+yᵢ^2)^0.5
+        s[i] = ds₁ + (r-1)/4/2^0.5*(ds₂-ds₁)
+    end
+    s .*= 2.0
+    # s .*= 2.
     push!(nodes_u,:s₁=>s,:s₂=>s,:s₃=>s)
 
     integrationOrder_Ω = 2
@@ -51,19 +63,12 @@ function import_linear_mix(filename1::String,filename2::String)
     elements["Ωᵖ"] = getElements(nodes,entities["Ω"], integrationOrder_Ω)
     elements["Ωᵍᵖ"] = getElements(nodes, entities["Ω"], integrationOrder_Ωᵍ)
     elements["∂Ωᵖ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
-    elements["Γ¹ᵖ"] = getElements(nodes,entities["Γ¹"], integrationOrder_Γ, normal = true)
-    elements["Γ²ᵖ"] = getElements(nodes,entities["Γ²"], integrationOrder_Γ, normal = true)
-    elements["Γ³ᵖ"] = getElements(nodes,entities["Γ³"], integrationOrder_Γ, normal = true)
-    elements["Γ⁴ᵖ"] = getElements(nodes,entities["Γ⁴"], integrationOrder_Γ, normal = true)
-    elements["Γᵖ"] = elements["Γ¹ᵖ"]∪elements["Γ²ᵖ"]∪elements["Γ³ᵖ"]∪elements["Γ⁴ᵖ"]
+    elements["Γᵍᵖ"] = getElements(nodes,entities["Γᵍ"], integrationOrder_Γ, normal = true)
 
     push!(elements["Ωᵖ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
     push!(elements["Ωᵍᵖ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
     push!(elements["∂Ωᵖ"],:𝝭)
-    push!(elements["Γ¹ᵖ"],:𝝭)
-    push!(elements["Γ²ᵖ"],:𝝭)
-    push!(elements["Γ³ᵖ"],:𝝭)
-    push!(elements["Γ⁴ᵖ"],:𝝭)
+    push!(elements["Γᵍᵖ"],:𝝭)
 
     type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
     # type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
@@ -71,39 +76,33 @@ function import_linear_mix(filename1::String,filename2::String)
     elements["Ωᵘ"] = getElements(nodes_u, entities["Ω"], type, integrationOrder_Ω, sp)
     elements["∂Ωᵘ"] = getElements(nodes_u, entities["Γ"], type, integrationOrder_Γ, sp, normal = true)
     elements["Ωᵍᵘ"] = getElements(nodes_u, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
-    elements["Γ¹ᵘ"] = getElements(nodes_u, entities["Γ¹"],type,  integrationOrder_Γ, sp, normal = true)
-    elements["Γ²ᵘ"] = getElements(nodes_u, entities["Γ²"],type,  integrationOrder_Γ, sp, normal = true)
-    elements["Γ³ᵘ"] = getElements(nodes_u, entities["Γ³"],type,  integrationOrder_Γ, sp, normal = true)
-    elements["Γ⁴ᵘ"] = getElements(nodes_u, entities["Γ⁴"], type, integrationOrder_Γ, sp, normal = true)
-    elements["Γᵘ"] = elements["Γ¹ᵘ"]∪elements["Γ²ᵘ"]∪elements["Γ³ᵘ"]∪elements["Γ⁴ᵘ"]
+    elements["Γᵗ"] = getElements(nodes_u, entities["Γᵗ"],type,  integrationOrder_Γ, sp, normal = true)
+    elements["Γᵍᵘ"] = getElements(nodes_u, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
 
-    nₘ = 21
+    nₘ = 6
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
     push!(elements["Ωᵘ"], :𝝭)
     push!(elements["∂Ωᵘ"], :𝝭)
-    push!(elements["Γ¹ᵘ"], :𝝭)
-    push!(elements["Γ²ᵘ"], :𝝭)
-    push!(elements["Γ³ᵘ"], :𝝭)
-    push!(elements["Γ⁴ᵘ"], :𝝭)
+    push!(elements["Γᵗ"], :𝝭)
+    push!(elements["Γᵍᵘ"], :𝝭)
     push!(elements["Ωᵘ"],  :𝗠=>𝗠)
     push!(elements["∂Ωᵘ"], :𝗠=>𝗠)
-    push!(elements["Γ¹ᵘ"], :𝗠=>𝗠)
-    push!(elements["Γ²ᵘ"], :𝗠=>𝗠)
-    push!(elements["Γ³ᵘ"], :𝗠=>𝗠)
-    push!(elements["Γ⁴ᵘ"], :𝗠=>𝗠)
+    push!(elements["Γᵗ"], :𝗠=>𝗠)
+    push!(elements["Γᵍᵘ"], :𝗠=>𝗠)
     push!(elements["Ωᵍᵘ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂𝝭∂z)
     push!(elements["Ωᵍᵘ"], :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
 
     set∇𝝭!(elements["Ωᵖ"])
     set𝝭!(elements["∂Ωᵖ"])
     set𝝭!(elements["Ωᵍᵖ"])
-    set𝝭!(elements["Γᵖ"])
+    set𝝭!(elements["Γᵍᵖ"])
     set𝝭!(elements["Ωᵘ"])
     set𝝭!(elements["∂Ωᵘ"])
     set∇𝝭!(elements["Ωᵍᵘ"])
-    set𝝭!(elements["Γᵘ"])
+    set𝝭!(elements["Γᵗ"])
+    set𝝭!(elements["Γᵍᵘ"])
 
     gmsh.finalize()
 
