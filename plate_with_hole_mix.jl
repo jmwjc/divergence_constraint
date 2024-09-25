@@ -9,12 +9,12 @@ include("import_plate_with_hole.jl")
 ps = MKLPardisoSolver()
 
 ndiv = 4
-n = 8
-poly = "tri3"
-# elements, nodes, nodes_u = import_linear_mix("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh","./msh/plate_with_hole_"*poly*"_"*string(n)*".msh",2*n)
-n₂ = 3
-n₁ = 7
-elements, nodes, nodes_u = import_linear_mix("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh","./msh/plate_with_hole_"*poly*"_"*string(n₂)*"_"*string(n₁)*".msh",n₁)
+# n = 8
+# poly = "tri3"
+# elements, nodes, nodes_u = import_linear_mix("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh","./msh/plate_with_hole_"*poly*"_"*string(n)*".msh",n)
+n₂ = 5
+n₁ = 9
+elements, nodes, nodes_u = import_linear_mix("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh","./msh/plate_with_hole_"*poly*"_"*string(n₂)*"_"*string(n₁)*".msh",n₂)
 # elements, nodes, nodes_u = import_linear_mix("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh","./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh")
 
 nₚ = length(nodes)

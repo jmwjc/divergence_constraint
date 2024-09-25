@@ -26,7 +26,7 @@ function import_fem(filename::String)
     return elements, nodes
 end
 
-function import_linear_mix(filename1::String,filename2::String,n₁::Int,n₂::Int,c₁::Float64,c₂::Float64)
+function import_linear_mix(filename1::String,filename2::String,n::Int)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
 
@@ -36,21 +36,17 @@ function import_linear_mix(filename1::String,filename2::String,n₁::Int,n₂::I
     xᵘ = nodes_u.x
     yᵘ = nodes_u.y
     zᵘ = nodes_u.z
-    w = 0.0
-    for i in 0:n₁-1
-        w += c^i
-    end
-    ds₂ = 4*2^0.5/w
-    ds₁ = ds₂*c^(n-1)
     s = zeros(length(nodes_u))
+    
     for (i,node) in enumerate(nodes_u) 
         xᵢ = node.x
         yᵢ = node.y
         r = (xᵢ^2+yᵢ^2)^0.5
-        s[i] = ds₁ + (r-1)/4/2^0.5*(ds₂-ds₁)
+        θ = atan(yᵢ/xᵢ)
+        s₀ = 0.25π*r/n
+        s[i] = s₀ + 2.0*s₀*(cos(θ)+sin(θ)-1.0)
     end
-    s .*= 2.0
-    # s .*= 2.
+    s .*= 1.5
     push!(nodes_u,:s₁=>s,:s₂=>s,:s₃=>s)
 
     integrationOrder_Ω = 2
