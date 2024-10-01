@@ -1,7 +1,7 @@
 a = 1.0;
 b = 1.0;
 c = 0.075;
-n = 4;
+n = 32;
 
 Point(1) = {0.0, 0.0, 0.0, c};
 Point(2) = {  a, 0.0, 0.0, c};
@@ -30,4 +30,4 @@ Physical Surface("Ω") = {1};
 Mesh 2;
 RecombineMesh;
 SetOrder 2;
-Mesh.SecondOrderIncomplete = 1;
+// Mesh.SecondOrderIncomplete = 1;
