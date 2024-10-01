@@ -1,4 +1,4 @@
-
+using Revise
 using TimerOutputs 
 using SparseArrays, Pardiso
 using CairoMakie
@@ -10,17 +10,17 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 32
+ndiv = 4
 # nₚ = 243
 # poly = "tri3"
 poly = "quad"
 @timeit to "import data" begin
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh")
-# n = 56
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
-nx = 131;ny = 32
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+n = 1
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+# nx = 131;ny = 32
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 nₚ = length(nodes_p)
 end
 

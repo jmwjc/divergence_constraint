@@ -3,13 +3,14 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-# n = 1
+n = 32
 
 # filename = "patchtest_"
-# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1)
+# filename = "patchtest_tri6_"
+# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 2)
 
-# filename = "patchtest_quad_"
-# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
+filename = "patchtest_quad_"
+BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
 # filename = "cantilever_tri3_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
@@ -38,27 +39,27 @@ using BubbleMsh
 # filename = "./msh/plate_with_hole_b_304.msh"
 # bubblemsh(filename,[2.5,2.5,0.0],[1.5,1.5,0.0],2698-304,0.085,0.07, maxiter=2000)
 
-n = 42
-n₁ = 68
-n₂ = 32
-c₁ = 1.025
-c₂ = 1.015
-c₃ = 1.033
-dx₁ = 0.25π/n₂
-dx₂ = 4*(c₁-1)/(c₁^n₁-1)
-dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
-dx₄ = 5*(c₂-1)/(c₂^n₂-1)
-dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
-err1 = 1 - dx₂/dx₁
-err2 = 1 - dx₄/dx₃
-err3 = 1 - dx₅/dx₁
-if abs(err1) ≤ 1e-1 && abs(err2) ≤ 1e-1 && abs(err3) ≤ 1e-1
-    # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
-    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
-    println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
-else
-    error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
-end
+# n = 42
+# n₁ = 68
+# n₂ = 32
+# c₁ = 1.025
+# c₂ = 1.015
+# c₃ = 1.033
+# dx₁ = 0.25π/n₂
+# dx₂ = 4*(c₁-1)/(c₁^n₁-1)
+# dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
+# dx₄ = 5*(c₂-1)/(c₂^n₂-1)
+# dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
+# err1 = 1 - dx₂/dx₁
+# err2 = 1 - dx₄/dx₃
+# err3 = 1 - dx₅/dx₁
+# if abs(err1) ≤ 1e-1 && abs(err2) ≤ 1e-1 && abs(err3) ≤ 1e-1
+#     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
+#     BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
+#     println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# else
+#     error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# end
 
 # 1    -> c₁ = 1.3700, c₂ =       , c₃ = 5.8000
 # 2    -> c₁ = 1.7000, c₂ = 1.5000, c₃ = 2.0000

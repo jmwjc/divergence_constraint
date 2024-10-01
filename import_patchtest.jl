@@ -211,12 +211,12 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
     s, var𝐴 = cal_area_support(Ω)
-    s = 1.5*s*ones(length(nodes_p))
+    s = 2.5*s*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 2
+    integrationOrder_Ω = 4
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 2
+    integrationOrder_Γ = 4
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()
@@ -243,8 +243,8 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     set∇𝝭!(elements["Ωᵍᵘ"])
     set𝝭!(elements["Γᵘ"])
 
-    type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
-    # type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
+    # type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
+    type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
     sp = RegularGrid(xᵖ,yᵖ,zᵖ,n = 3,γ = 5)
     elements["Ωᵖ"] = getElements(nodes_p, entities["Ω"], type, integrationOrder_Ω, sp)
     elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
@@ -255,7 +255,7 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     elements["Γ⁴ᵖ"] = getElements(nodes_p, entities["Γ⁴"], type, integrationOrder_Γ, sp, normal = true)
     elements["Γᵖ"] = elements["Γ¹ᵖ"]∪elements["Γ²ᵖ"]∪elements["Γ³ᵖ"]∪elements["Γ⁴ᵖ"]
 
-    nₘ = 6
+    nₘ = 21
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
@@ -279,8 +279,14 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     set∇𝝭!(elements["Ωᵍᵖ"])
     set𝝭!(elements["Γᵖ"])
 
-    type = PiecewisePolynomial{:Constant}
-    # type = PiecewisePolynomial{:Linear2D}
+    filename1s = split(filename1,"_")
+    if filename1s[2] == "quad8"
+        filename3 = replace(filename1,"quad8"=>"quad")
+        gmsh.open(filename3)
+        entities = getPhysicalGroups()
+    end
+    # type = PiecewisePolynomial{:Constant}
+    type = PiecewisePolynomial{:Linear2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
     elements["Γ¹ˢ"] = getElements(entities["Γ¹"],entities["Γ"], elements["∂Ωˢ"])
@@ -294,10 +300,10 @@ function import_patchtest_elasticity_mix(filename1::String,filename2::String)
     set∇𝝭!(elements["Ωˢ"])
     set𝝭!(elements["∂Ωˢ"])
 
-    type = PiecewiseParametric{:Bubble,:Tri3}
-    elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],type,integrationOrder_Ω)
-    push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    set∇𝝭!(elements["Ωᵇ"])
+    # type = PiecewiseParametric{:Bubble,:Tri3}
+    # elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],type,integrationOrder_Ω)
+    # push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # set∇𝝭!(elements["Ωᵇ"])
 
     gmsh.finalize()
 

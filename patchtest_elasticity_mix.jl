@@ -4,20 +4,22 @@ using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p
 
 include("import_patchtest.jl")
 
-ndiv = 8
-nₚ = 28
-elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
-# elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_"*string(ndiv)*".msh")
+ndiv = 4
+nₚ = 239
+# elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
+# elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_tri6_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
+# elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
+elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_quad8_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
 
 nₑ = length(elements["Ωᵘ"])
-nₛ = 1
+nₛ = 3
 nᵤ = length(nodes)
 
 E = 1.0
-# ν = 0.3
-ν = 0.4999999
+ν = 0.3
+# ν = 0.4999999
 
-n = 5
+n = 2
 u(x,y) = (1+2*x+3*y)^n
 v(x,y) = (4+5*x+6*y)^n
 ∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
@@ -111,7 +113,7 @@ fᵘ = zeros(2*nᵤ)
 𝑏ᵖᵅ(kᵖᵘ,fᵖ)
 𝑓(fᵘ)
 
-d = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ]\[fᵘ;fᵖ;fˢ]
+d = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ]\[-fᵘ;fᵖ;fˢ]
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]
