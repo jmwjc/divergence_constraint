@@ -27,7 +27,8 @@ Physical Surface("Ω") = {1};
 
 // Mesh.Algorithm = 1;
 // Mesh.MshFileVersion = 2;
+Mesh.Renumber = 0;
 Mesh 2;
 RecombineMesh;
 SetOrder 2;
-// Mesh.SecondOrderIncomplete = 1;
+Mesh.SecondOrderIncomplete = 1;
