@@ -5,7 +5,7 @@ using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p
 include("import_patchtest.jl")
 
 ndiv = 4
-nₚ = 239
+nₚ = 60
 # elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
 # elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_tri6_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
 # elements, nodes, nodes_p = import_patchtest_elasticity_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")

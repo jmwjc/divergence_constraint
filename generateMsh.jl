@@ -3,12 +3,14 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-n = 32
+n = 2
 
 # filename = "patchtest_"
 # filename = "patchtest_tri6_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 2)
 
+# filename = "patchtest_quad_"
+# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
@@ -23,8 +25,8 @@ n = 32
 #     BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end
 
-# filename = "plate_with_hole_tri3_"
-# BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1)
+# filename = "plate_with_hole_tri6_"
+# BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 2)
 
 # ndiv = 2
 # filename = "./msh/plate_with_hole_b_20.msh"
@@ -39,12 +41,14 @@ n = 32
 # filename = "./msh/plate_with_hole_b_304.msh"
 # bubblemsh(filename,[2.5,2.5,0.0],[1.5,1.5,0.0],2698-304,0.085,0.07, maxiter=2000)
 
-n = 32
+n = 4
+# n₁ = 68
+# n₂ = 32
 n₁ = 2*n
 n₂ = n
-c₁ = 1.025
-c₂ = 1.015
-c₃ = 1.035
+c₁ = 1.25
+c₂ = 1.2
+c₃ = 1.35
 dx₁ = 0.25π/n₂
 dx₂ = 4*(c₁-1)/(c₁^n₁-1)
 dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
@@ -57,7 +61,7 @@ if abs(err1) ≤ 1e-1 && abs(err2) ≤ 1e-1 && abs(err3) ≤ 1e-1
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
 
-    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri6_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃), order = 2)
+    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri6_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
     println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
 else
     error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
