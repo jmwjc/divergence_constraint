@@ -105,7 +105,7 @@ function import_linear_mix(filename1::String,filename2::String,n::Int)
     return elements, nodes, nodes_u
 end
 
-function import_linear_elasticity_mix(filename1::String,filename2::String,n::Int)
+function import_elasticity_linear_mix(filename1::String,filename2::String,n::Int)
     elements = Dict{String,Vector{ApproxOperator.AbstractElement}}()
     gmsh.initialize()
 
@@ -178,8 +178,8 @@ function import_linear_elasticity_mix(filename1::String,filename2::String,n::Int
     push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
     set𝝭!(elements["∂Ωᵖ"])
 
-    # type = PiecewisePolynomial{:Constant}
-    type = PiecewisePolynomial{:Linear2D}
+    type = PiecewisePolynomial{:Constant}
+    # type = PiecewisePolynomial{:Linear2D}
     elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
     elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
     elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
@@ -199,7 +199,7 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
     gmsh.initialize()
 
     gmsh.open(filename2)
-    entities = getPhysicalGroups()
+    # entities = getPhysicalGroups()
     nodes_p = get𝑿ᵢ()
     xᵖ = nodes_p.x
     yᵖ = nodes_p.y
@@ -233,13 +233,17 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
     push!(elements["Ωᵍᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
     push!(elements["Γᵍᵘ"],:𝝭)
     push!(elements["Γᵗ"], :𝝭)
+    set∇𝝭!(elements["Ωᵘ"])
+    set∇𝝭!(elements["Ωᵍᵘ"])
+    set𝝭!(elements["Γᵍᵘ"])
+    set𝝭!(elements["Γᵗ"])
 
     # type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
     type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
     sp = RegularGrid(xᵖ,yᵖ,zᵖ,n = 3,γ = 5)
-    elements["Ωᵖ"] = getElements(nodes_u, entities["Ω"], type, integrationOrder_Ω, sp)
-    elements["Ωᵍᵖ"] = getElements(nodes_u, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
-    elements["Γᵍᵖ"] = getElements(nodes_u, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
+    elements["Ωᵖ"] = getElements(nodes_p, entities["Ω"], type, integrationOrder_Ω, sp)
+    elements["Ωᵍᵖ"] = getElements(nodes_p, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
+    elements["Γᵍᵖ"] = getElements(nodes_p, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
 
     nₘ = 21
     𝗠 = zeros(nₘ)
@@ -250,12 +254,8 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
     push!(elements["Ωᵍᵖ"], :𝝭)
     push!(elements["Ωᵍᵖ"], :𝗠=>𝗠)
 
-    set∇𝝭!(elements["Ωᵘ"])
     set𝝭!(elements["Ωᵖ"])
-    set𝝭!(elements["Γᵗ"])
-    set𝝭!(elements["Γᵍᵘ"])
     set𝝭!(elements["Γᵍᵖ"])
-    set∇𝝭!(elements["Ωᵍᵘ"])
     set𝝭!(elements["Ωᵍᵖ"])
 
     filename1s = split(filename1,"_")

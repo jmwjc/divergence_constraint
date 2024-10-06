@@ -5,7 +5,7 @@ using ApproxOperator.Heat: ∫∫∇v∇udxdy, ∫vtdΓ, ∫vbdΩ, ∫vgdΓ, H�
 
 include("import_plate_with_hole.jl")
 
-ndiv = 4
+ndiv = 2
 poly = "tri3"
 elements, nodes = import_fem("./msh/plate_with_hole_"*poly*"_"*string(ndiv)*".msh")
 
