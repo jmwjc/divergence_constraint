@@ -117,13 +117,15 @@ function import_elasticity_linear_mix(filename1::String,filename2::String,n::Int
     zᵖ = nodes_p.z
     s = zeros(length(nodes_p))
     
+    # >30: 0.2
+    # ≈16: 0.1
     for (i,node) in enumerate(nodes_p) 
         xᵢ = node.x
         yᵢ = node.y
         r = (xᵢ^2+yᵢ^2)^0.5
         θ = atan(yᵢ/xᵢ)
         s₀ = 0.25π*r/n
-        s[i] = s₀ + 2.0*s₀*(cos(θ)+sin(θ)-1.0)
+        s[i] = s₀ + 1*s₀*(cos(θ)+sin(θ)-1.0)
     end
     s .*= 1.5
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
@@ -212,7 +214,7 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
         r = (xᵢ^2+yᵢ^2)^0.5
         θ = atan(yᵢ/xᵢ)
         s₀ = 0.25π*r/n
-        s[i] = s₀ + 2.0*s₀*(cos(θ)+sin(θ)-1.0)
+        s[i] = s₀ - 0.2*s₀*(cos(θ)+sin(θ)-1.0)
     end
     s .*= 2.5
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)

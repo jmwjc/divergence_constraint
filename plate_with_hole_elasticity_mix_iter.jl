@@ -1,26 +1,30 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
+using SparseArrays, Pardiso, XLSX
 using CairoMakie
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_plate_with_hole.jl")
 
-const to = TimerOutput()
+ndiv = 8
+
+indices = 1:16
+nₜ = length(indices)
+L₂_𝒖   = zeros(nₜ)
+Hₑ_𝒖   = zeros(nₜ)
+Hₑ_dev = zeros(nₜ)
+L₂_𝑝   = zeros(nₜ)
+
+for (i,n) in enumerate(indices)
 ps = MKLPardisoSolver()
 
-ndiv = 32
-@timeit to "import data" begin
-# n = 5
-# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
 # elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# nx = 29;ny = 16
-nx = 64;ny = 31
-elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
+# nx = 131;ny = 32
+# elements, nodes, nodes_p = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 
 nₚ = length(nodes_p)
-end
 
 nₑ = length(elements["Ωᵘ"])
 nₛ = 1
@@ -40,7 +44,7 @@ Cᵢⱼᵢⱼ = E/(1+ν)/2
 a = 1
 b = 5
 
-# n = 3
+# n = 1
 # u(x,y) = (1+2*x+3*y)^n
 # v(x,y) = (4+5*x+6*y)^n
 # ∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
@@ -133,7 +137,6 @@ fˢ = zeros(4*nₛ*nₑ)
 fᵖ = zeros(nₚ)
 fᵘ = zeros(2*nᵤ)
 
-@timeit to "assembly" begin
 𝑎ˢ(kˢˢ)
 𝑎ᵖ(kᵖᵖ)
 𝑏ˢ(kˢᵘ)
@@ -141,7 +144,6 @@ fᵘ = zeros(2*nᵤ)
 𝑏ˢᵅ(kˢᵘ,fˢ)
 𝑏ᵖᵅ(kᵖᵘ,fᵖ)
 𝑓(fᵘ)
-end
 # k = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ]
 k = sparse([zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ])
 f = [-fᵘ;fᵖ;fˢ]
@@ -150,7 +152,7 @@ d = zeros(2*nᵤ+nₚ+4*nₛ*nₑ)
 
 set_matrixtype!(ps, -2)
 k = get_matrix(ps,k,:N)
-@timeit to "solve" pardiso(ps,d,k,f)
+pardiso(ps,d,k,f)
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]
@@ -159,56 +161,32 @@ push!(nodes,:d₁=>𝑢₁)
 push!(nodes,:d₂=>𝑢₂)
 push!(nodes_p,:p=>𝑝)
 
-@timeit to "compute error" begin
-Hₑ_𝒖, L₂_𝒖 = Hₑ_PlaneStress(elements["Ωᵍᵘ"])
-Hₑ_dev = Hₑ_PlaneStrain_Deviatoric(elements["Ωᵍᵘ"])
-L₂_𝑝 = L₂𝑝(elements["Ωᵍᵖ"])
+Hₑ_𝒖_, L₂_𝒖_ = Hₑ_PlaneStress(elements["Ωᵍᵘ"])
+Hₑ_dev_ = Hₑ_PlaneStrain_Deviatoric(elements["Ωᵍᵘ"])
+L₂_𝑝_ = L₂𝑝(elements["Ωᵍᵖ"])
+
+L₂_𝒖[i] = log10(L₂_𝒖_)
+Hₑ_𝒖[i] = log10(Hₑ_𝒖_)
+Hₑ_dev[i] = log10(Hₑ_dev_)
+L₂_𝑝[i] = log10(L₂_𝑝_)
+
+println("n = $n, L₂_𝒖 = $L₂_𝒖_, Hₑ_𝒖 = $Hₑ_𝒖_, Hₑ_dev = $Hₑ_dev_, L₂_𝑝 = $L₂_𝑝_")
+
 end
 
-println(log10(L₂_𝒖))
-println(log10(Hₑ_𝒖))
-println(log10(Hₑ_dev))
-println(log10(L₂_𝑝))
 
-# @timeit to "plot figure" begin
-# fig = Figure()
-# ind = 100
-# ax = Axis(fig[1,1], 
-#     aspect = DataAspect(), 
-#     xticksvisible = false,
-#     xticklabelsvisible=false, 
-#     yticksvisible = false, 
-#     yticklabelsvisible=false,
-# )
-# hidespines!(ax)
-# hidedecorations!(ax)
-# xs = LinRange(0, 48, 4*ind)
-# ys = LinRange(-6, 6, ind)
-# zs = zeros(4*ind,ind)
-# 𝗠 = zeros(21)
-# for (i,x) in enumerate(xs)
-#     for (j,y) in enumerate(ys)
-#         indices = sp(x,y,0.0)
-#         ni = length(indices)
-#         𝓒 = [nodes_p[i] for i in indices]
-#         data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-#         ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-#         𝓖 = [ξ]
-#         a = type(𝓒,𝓖)
-#         set𝝭!(a)
-#         p = 0.0
-#         N = ξ[:𝝭]
-#         for (k,xₖ) in enumerate(𝓒)
-#             p += N[k]*xₖ.p
-#         end
-#         zs[i,j] = p
-#     end
-# end
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
-# Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# save("./png/cantilever_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-# end
-
-show(to)
-# fig
+XLSX.openxlsx("./xlsx/plate_with_hole_linear_mix.xlsx", mode = "rw") do xf
+    sheet = xf[1]
+    row = "A"
+    row_L₂_𝒖 = "B"
+    row_Hₑ_𝒖 = "C"
+    row_Hₑ_dev = "D"
+    row_L₂_𝑝 = "E"
+    for (n,L₂_𝒖_,Hₑ_𝒖_,Hₑ_dev_,L₂_𝑝_) in zip(indices,L₂_𝒖,Hₑ_𝒖,Hₑ_dev,L₂_𝑝)
+        sheet[row*string(n)] = n
+        sheet[row_L₂_𝒖*string(n)] = L₂_𝒖_
+        sheet[row_Hₑ_𝒖*string(n)] = Hₑ_𝒖_
+        sheet[row_Hₑ_dev*string(n)] = Hₑ_dev_
+        sheet[row_L₂_𝑝*string(n)] = L₂_𝑝_
+    end
+end

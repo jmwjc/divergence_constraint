@@ -3,27 +3,28 @@ using TimerOutputs
 using SparseArrays, Pardiso
 using CairoMakie
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫qpdxdy, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_plate_with_hole.jl")
 
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 32
+ndiv = 4
 @timeit to "import data" begin
-# n = 5
+# n = 16
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# nx = 29;ny = 16
-nx = 64;ny = 31
+nx = 7;ny = 3
 elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
+# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+# nx = 7;ny = 3
+# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
 
 nₚ = length(nodes_p)
 end
 
 nₑ = length(elements["Ωᵘ"])
-nₛ = 1
+# nₛ = 3
 nᵤ = length(nodes)
 
 # T = 1.0e3
@@ -88,8 +89,8 @@ v(x,y) = T*a*(1+ν̄)/2/Ē*( -r(x,y)/a*2*ν̄/(1+ν̄)*sin(θ(x,y)) - a/r(x,y)*
 # b₂(x,y) = -∂σ₁₂∂x(x,y) - ∂σ₂₂∂y(x,y)
 p(x,y) = (σ₁₁(x,y)+σ₂₂(x,y)+σ₃₃(x,y))/3
 
-prescribe!(elements["Ωˢ"],:E=>(x,y,z)->E)
-prescribe!(elements["Ωˢ"],:ν=>(x,y,z)->ν)
+prescribe!(elements["Ωᵘ"],:E=>(x,y,z)->E)
+prescribe!(elements["Ωᵘ"],:ν=>(x,y,z)->ν)
 prescribe!(elements["Ωᵖ"],:E=>(x,y,z)->E)
 prescribe!(elements["Ωᵖ"],:ν=>(x,y,z)->ν)
 prescribe!(elements["Ωᵍᵘ"],:E=>(x,y,z)->E)
@@ -98,6 +99,7 @@ prescribe!(elements["Ωᵍᵘ"],:ν=>(x,y,z)->ν)
 # prescribe!(elements["Ωᵘ"],:b₂=>(x,y,z)->b₂(x,y))
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
+prescribe!(elements["Γᵍᵘ"],:α=>(x,y,z)->1e12)
 prescribe!(elements["Γᵍᵘ"],:g₁=>(x,y,z)->u(x,y))
 prescribe!(elements["Γᵍᵘ"],:g₂=>(x,y,z)->v(x,y))
 # prescribe!(elements["Γᵍᵘ"],:n₁₁=>(x,y,z,n₁,n₂)->1.0)
@@ -113,39 +115,28 @@ prescribe!(elements["Ωᵍᵘ"],:∂v∂x=>(x,y,z)->∂v∂x(x,y))
 prescribe!(elements["Ωᵍᵘ"],:∂v∂y=>(x,y,z)->∂v∂y(x,y))
 prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 
-𝑎ˢ = ∫∫sᵢⱼsᵢⱼdxdy=>elements["Ωˢ"]
+𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
 𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
-𝑏ˢ = ∫∫sᵢⱼεᵢⱼdxdy=>(elements["Ωˢ"],elements["Ωᵘ"])
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
-𝑏ˢᵅ = ∫sᵢⱼnⱼgᵢds=>(elements["Γᵍˢ"],elements["Γᵍᵘ"])
-𝑏ᵖᵅ = ∫pnᵢgᵢds=>(elements["Γᵍᵖ"],elements["Γᵍᵘ"])
+𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
-# 𝑓 = [
-#     ∫vᵢtᵢds=>elements["Γᵗ"],
-#     ∫∫vᵢbᵢdxdy=>elements["Ωᵘ"]
-# ]
 
-kˢˢ = zeros(4*nₛ*nₑ,4*nₛ*nₑ)
+kᵘᵘ = zeros(2*nᵤ,2*nᵤ)
 kᵖᵖ = zeros(nₚ,nₚ)
-kˢᵘ = zeros(4*nₛ*nₑ,2*nᵤ)
 kᵖᵘ = zeros(nₚ,2*nᵤ)
-fˢ = zeros(4*nₛ*nₑ)
 fᵖ = zeros(nₚ)
 fᵘ = zeros(2*nᵤ)
 
 @timeit to "assembly" begin
-𝑎ˢ(kˢˢ)
+𝑎ᵘ(kᵘᵘ)
 𝑎ᵖ(kᵖᵖ)
-𝑏ˢ(kˢᵘ)
 𝑏ᵖ(kᵖᵘ)
-𝑏ˢᵅ(kˢᵘ,fˢ)
-𝑏ᵖᵅ(kᵖᵘ,fᵖ)
+𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
 end
-# k = [zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ]
-k = sparse([zeros(2*nᵤ,2*nᵤ) kᵖᵘ' kˢᵘ';kᵖᵘ kᵖᵖ zeros(nₚ,4*nₛ*nₑ);kˢᵘ zeros(4*nₛ*nₑ,nₚ) kˢˢ])
-f = [-fᵘ;fᵖ;fˢ]
-d = zeros(2*nᵤ+nₚ+4*nₛ*nₑ)
+k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+f = [-fᵘ;fᵖ]
+d = zeros(2*nᵤ+nₚ)
 # d = k\f
 
 set_matrixtype!(ps, -2)
