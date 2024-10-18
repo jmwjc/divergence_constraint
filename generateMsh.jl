@@ -17,8 +17,8 @@ n = 2
 # filename = "cantilever_tri3_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 
-# filename = "cantilever_quad_"
-# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true, order=1)
+filename = "cantilever_quad_"
+BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true, order=1)
 
 # for n in 49:56
 #     filename = "cantilever_"
@@ -41,31 +41,31 @@ n = 2
 # filename = "./msh/plate_with_hole_b_304.msh"
 # bubblemsh(filename,[2.5,2.5,0.0],[1.5,1.5,0.0],2698-304,0.085,0.07, maxiter=2000)
 
-n = 31
-n₁ = 68
-n₂ = 32
+# n = 31
+# n₁ = 68
+# n₂ = 32
 # n₁ = 2*n
 # n₂ = n
-c₁ = 1.023355
-c₂ = 1.01884
-c₃ = 1.03155
-dx₁ = 0.25π/n₂
-dx₂ = 4*(c₁-1)/(c₁^n₁-1)
-dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
-dx₄ = 5*(c₂-1)/(c₂^n₂-1)
-dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
-err1 = 1 - dx₂/dx₁
-err2 = 1 - dx₄/dx₃
-err3 = 1 - dx₅/dx₁
-if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
+# c₁ = 1.023355
+# c₂ = 1.01884
+# c₃ = 1.03155
+# dx₁ = 0.25π/n₂
+# dx₂ = 4*(c₁-1)/(c₁^n₁-1)
+# dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
+# dx₄ = 5*(c₂-1)/(c₂^n₂-1)
+# dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
+# err1 = 1 - dx₂/dx₁
+# err2 = 1 - dx₄/dx₃
+# err3 = 1 - dx₅/dx₁
+# if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
-    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
+    # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
 
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri6_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃),order=2)
-    println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
-else
-    error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
-end
+    # println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# else
+    # error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# end
 
 # 1    -> c₁ = 1.3700, c₂ =       , c₃ = 5.8000
 # 2    -> c₁ = 1.7000, c₂ = 1.5000, c₃ = 2.0000

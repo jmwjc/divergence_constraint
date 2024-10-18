@@ -10,22 +10,20 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 4
+ndiv = 16
 # nₚ = 243
 # poly = "tri3"
-poly = "quad8"
 @timeit to "import data" begin
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_c_"*string(nₚ)*".msh")
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh")
-n = 1
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
-# nx = 131;ny = 32
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_"*poly*"_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+# n = 8
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_quad8_"*string(n)*".msh",4*n,n)
+nx = 20;ny = 16
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 nₚ = length(nodes_p)
 end
 
 nₑ = length(elements["Ωᵘ"])
-nₛ = 3
 nᵤ = length(nodes)
 
 L = 48.0
@@ -65,8 +63,6 @@ prescribe!(elements["Ωᵍᵘ"],:E=>(x,y,z)->E, index=:𝑔)
 prescribe!(elements["Ωᵍᵘ"],:ν=>(x,y,z)->ν, index=:𝑔)
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
-prescribe!(elements["Γʳ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
-prescribe!(elements["Γʳ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
 prescribe!(elements["Γᵍᵘ"],:α=>(x,y,z)->1e12)
 prescribe!(elements["Γᵍᵘ"],:g₁=>(x,y,z)->u(x,y))
 prescribe!(elements["Γᵍᵘ"],:g₂=>(x,y,z)->v(x,y))
@@ -206,6 +202,9 @@ println(log10(Hₑ_𝒖))
 println(log10(Hₑ_dev))
 println(log10(L₂_𝑝))
 
+# include("check_rank.jl")
+# println(check_rank(nodes_p),)
+
 # @timeit to "plot figure" begin
 # fig = Figure()
 # ind = 100
@@ -243,7 +242,7 @@ println(log10(L₂_𝑝))
 # surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
 # contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
 # Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# save("./png/cantilever_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
+# save("./png/cantilever_mix_quad8_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
 # end
 
 show(to)
