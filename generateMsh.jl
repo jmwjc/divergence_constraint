@@ -3,11 +3,16 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-n = 2
+n = 32
 
+# nx = 2
 # filename = "patchtest_"
 # filename = "patchtest_tri6_"
-# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 2)
+filename = "patchtest_quad_"
+# for n in 1:20
+BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 1, quad=true)
+# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(nx)*"_"*string(n)*".msh", transfinite = (nx+1,n+1), order = 1)
+# end
 
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
@@ -17,8 +22,8 @@ n = 2
 # filename = "cantilever_tri3_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 
-filename = "cantilever_quad_"
-BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true, order=1)
+# filename = "cantilever_quad_"
+# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true, order=1)
 
 # for n in 49:56
 #     filename = "cantilever_"
