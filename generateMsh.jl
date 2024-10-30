@@ -33,8 +33,8 @@ n = 4
 #     BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end
 
-filename = "plate_with_hole_convergence_tri6_"
-BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 2, coef = (1.257,1.169,1.3514))
+filename = "plate_with_hole_convergence_tri3_"
+BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, coef = (1.,1.,1.))
 
 # ndiv = 2
 # filename = "./msh/plate_with_hole_b_20.msh"
