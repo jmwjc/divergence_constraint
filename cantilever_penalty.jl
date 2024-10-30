@@ -10,14 +10,14 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 8
+ndiv = 16
 # nₚ = 243
 # poly = "tri3"
 @timeit to "import data" begin
-# n = 8
+n = 16
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
-# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_quad8_"*string(n)*".msh",4*n,n)
-# nx = 11;ny = 3
+elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_tri6_"*string(ndiv)*".msh","./msh/cantilever_quad_"*string(n)*".msh",4*n,n)
+# nx = 165;ny = 23
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 # elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 nₚ = length(nodes_p)
@@ -29,10 +29,10 @@ nᵤ = length(nodes)
 L = 48.0
 D = 12.0
 P = 1000
-# E = 3e6
-E = 1.0
-# ν = 0.5-1e-8
-ν = 0.3
+E = 3e6
+# E = 1.0
+ν = 0.5-1e-8
+# ν = 0.3
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 I = D^3/12
@@ -248,9 +248,9 @@ println(log10(L₂_𝑝))
 show(to)
 # fig
 
-val = eigvals(kᵖᵘ\kᵖᵖ*kᵖᵘ,kᵘᵘ)
-val_abs = abs.(val)
-val_sort = sort(val_abs)
-println(2*nᵤ-nₚ+1)
-println.(val[2*nᵤ-nₚ.+(-2:4)]);
-println.(val_sort[2*nᵤ-nₚ.+(-2:4)]);
+# val = eigvals(kᵖᵘ\kᵖᵖ*kᵖᵘ,kᵘᵘ)
+# val_abs = abs.(val)
+# val_sort = sort(val_abs)
+# println(2*nᵤ-nₚ+1)
+# println.(val[2*nᵤ-nₚ.+(-2:4)]);
+# println.(val_sort[2*nᵤ-nₚ.+(-2:4)]);

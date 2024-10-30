@@ -3,14 +3,14 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-n = 32
+n = 4
 
 # nx = 2
 # filename = "patchtest_"
 # filename = "patchtest_tri6_"
-filename = "patchtest_quad_"
+# filename = "patchtest_quad_"
 # for n in 1:20
-BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 1, quad=true)
+# BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, order = 1, quad=true)
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(nx)*"_"*string(n)*".msh", transfinite = (nx+1,n+1), order = 1)
 # end
 
@@ -19,8 +19,11 @@ BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", trans
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
-# filename = "cantilever_tri3_"
-# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
+# filename = "cook_tri3_"
+# BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=false)
+
+# filename = "cantilever_tri6_"
+# BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=2)
 
 # filename = "cantilever_quad_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true, order=1)
@@ -30,8 +33,8 @@ BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", trans
 #     BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end
 
-# filename = "plate_with_hole_tri6_"
-# BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 2)
+filename = "plate_with_hole_convergence_tri6_"
+BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 2, coef = (1.2,1.3,1.28))
 
 # ndiv = 2
 # filename = "./msh/plate_with_hole_b_20.msh"

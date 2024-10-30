@@ -4,9 +4,9 @@ using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy,
 
 include("import_patchtest.jl")
 
-ndiv = 4
+ndiv = 16
 
-indices = 55:55
+indices = 2:64
 
 n_eig_nonzeros = zeros(Int,length(indices))
 n_eig_real = zeros(Int,length(indices))
@@ -16,8 +16,9 @@ min_eig_real = zeros(length(indices))
 for (i,n) in enumerate(indices)
 
 # elements, nodes, nodes_p = import_infsup_linear_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
-elements, nodes, nodes_p = import_infsup_linear_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
+# elements, nodes, nodes_p = import_infsup_linear_mix("./msh/patchtest_quad_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
 # elements, nodes, nodes_p = import_infsup_quadratic_mix("./msh/patchtest_tri6_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
+elements, nodes, nodes_p = import_infsup_quadratic_mix("./msh/patchtest_quad8_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
 # nx = 2;ny = n;
 # elements, nodes, nodes_p = import_infsup_linear_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_"*string(nx)*"_"*string(ny)*".msh",nx,ny)
 

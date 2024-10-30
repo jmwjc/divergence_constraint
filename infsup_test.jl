@@ -4,13 +4,14 @@ using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy,
 
 include("import_patchtest.jl")
 
-ndiv = 16
+ndiv = 8
 
-n = 36
+n = 8
 
 # elements, nodes, nodes_p = import_patchtest_elasticity_penalty("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_c_"*string(nₚ)*".msh")
 # elements, nodes, nodes_p = import_infsup_linear_mix("./msh/patchtest_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
-elements, nodes, nodes_p = import_infsup_quadratic_mix("./msh/patchtest_tri6_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
+# elements, nodes, nodes_p = import_infsup_quadratic_mix("./msh/patchtest_tri6_"*string(ndiv)*".msh","./msh/patchtest_"*string(n)*".msh",n,n)
+elements, nodes, nodes_p = import_infsup_quadratic_mix("./msh/patchtest_quad8_"*string(ndiv)*".msh","./msh/patchtest_quad8_"*string(n)*".msh",15,15)
 
 nₑ = length(elements["Ωᵘ"])
 nᵤ = length(nodes)
