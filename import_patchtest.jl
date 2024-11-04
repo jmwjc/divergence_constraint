@@ -129,9 +129,9 @@ function import_patchtest_elasticity_penalty(filename1::String,filename2::String
     s = 1.5*s*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 2
+    integrationOrder_Ω = 4
     integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 2
+    integrationOrder_Γ = 4
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()

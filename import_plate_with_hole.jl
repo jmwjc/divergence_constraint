@@ -172,24 +172,24 @@ function import_elasticity_linear_mix(filename1::String,filename2::String,n::Int
     set𝝭!(elements["Γᵍᵖ"])
     set𝝭!(elements["Ωᵍᵖ"])
 
-    elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
-    push!(elements["∂Ωᵘ"],:𝝭)
-    set𝝭!(elements["∂Ωᵘ"])
-    elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
-    push!(elements["∂Ωᵖ"], :𝝭)
-    push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
-    set𝝭!(elements["∂Ωᵖ"])
+    # elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
+    # push!(elements["∂Ωᵘ"],:𝝭)
+    # set𝝭!(elements["∂Ωᵘ"])
+    # elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
+    # push!(elements["∂Ωᵖ"], :𝝭)
+    # push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
+    # set𝝭!(elements["∂Ωᵖ"])
 
-    type = PiecewisePolynomial{:Constant}
-    # type = PiecewisePolynomial{:Linear2D}
-    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
-    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
-    elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
-    push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["∂Ωˢ"], :𝝭)
+    # type = PiecewisePolynomial{:Constant}
+    # # type = PiecewisePolynomial{:Linear2D}
+    # elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
+    # elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
+    # elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
+    # push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # push!(elements["∂Ωˢ"], :𝝭)
 
-    set∇𝝭!(elements["Ωˢ"])
-    set𝝭!(elements["∂Ωˢ"])
+    # set∇𝝭!(elements["Ωˢ"])
+    # set𝝭!(elements["∂Ωˢ"])
 
     gmsh.finalize()
 
@@ -206,17 +206,18 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
     xᵖ = nodes_p.x
     yᵖ = nodes_p.y
     zᵖ = nodes_p.z
+
     s = zeros(length(nodes_p))
-    
     for (i,node) in enumerate(nodes_p) 
         xᵢ = node.x
         yᵢ = node.y
         r = (xᵢ^2+yᵢ^2)^0.5
         θ = atan(yᵢ/xᵢ)
         s₀ = 0.25π*r/n
-        s[i] = s₀ - 0.2*s₀*(cos(θ)+sin(θ)-1.0)
+        s[i] = s₀ + 1.0*s₀*(cos(θ)+sin(θ)-1.0)
     end
     s .*= 2.5
+    # s = 2.1*(5-2^0.5)/2/n .* ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
     integrationOrder_Ω = 4

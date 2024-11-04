@@ -10,11 +10,11 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 16
+ndiv = 4
 # nₚ = 243
 # poly = "tri3"
 @timeit to "import data" begin
-n = 16
+n = 4
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
 elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_tri6_"*string(ndiv)*".msh","./msh/cantilever_quad_"*string(n)*".msh",4*n,n)
 # nx = 165;ny = 23
