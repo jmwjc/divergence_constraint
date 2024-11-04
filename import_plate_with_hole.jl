@@ -268,23 +268,23 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
         entities = getPhysicalGroups()
     end
 
-    elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
-    push!(elements["∂Ωᵘ"],:𝝭)
-    set𝝭!(elements["∂Ωᵘ"])
-    elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
-    push!(elements["∂Ωᵖ"], :𝝭)
-    push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
-    set𝝭!(elements["∂Ωᵖ"])
+    # elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
+    # push!(elements["∂Ωᵘ"],:𝝭)
+    # set𝝭!(elements["∂Ωᵘ"])
+    # elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
+    # push!(elements["∂Ωᵖ"], :𝝭)
+    # push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
+    # set𝝭!(elements["∂Ωᵖ"])
 
-    type = PiecewisePolynomial{:Linear2D}
-    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
-    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
-    elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
-    push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["∂Ωˢ"], :𝝭)
+    # type = PiecewisePolynomial{:Linear2D}
+    # elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], type, integrationOrder_Ω)
+    # elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], type, integrationOrder_Γ)
+    # elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
+    # push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # push!(elements["∂Ωˢ"], :𝝭)
 
-    set∇𝝭!(elements["Ωˢ"])
-    set𝝭!(elements["∂Ωˢ"])
+    # set∇𝝭!(elements["Ωˢ"])
+    # set𝝭!(elements["∂Ωˢ"])
 
     gmsh.finalize()
 

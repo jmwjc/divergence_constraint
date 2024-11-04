@@ -1,12 +1,12 @@
 
 a = 1.0;
 b = 5.0;
-n = 4;
+n = 16;
 n1 = 2*n;
 n2 = n;
-c1 = 1.257;
-c2 = 1.169;
-c3 = 1.3514;
+c1 = 1.0542;
+c2 = 1.0279;
+c3 = 1.0723;
 c = 0.112;
 
 Point(1) = {0.0, 0.0, 0.0};
@@ -45,8 +45,9 @@ Transfinite Surface{2} Right;
 Mesh.Algorithm = 1;
 // Mesh.MshFileVersion = 2;
 // Mesh.Renumber = 0;
+Mesh.ElementOrder = 2;
+Mesh.SecondOrderLinear = 1;
 Mesh 2;
 // RefineMesh;
 // RecombineMesh;
-// SetOrder 2;
 // Mesh.SecondOrderIncomplete = 1;

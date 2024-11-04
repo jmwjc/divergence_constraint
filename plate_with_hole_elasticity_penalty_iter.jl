@@ -7,9 +7,9 @@ using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy,
 
 include("import_plate_with_hole.jl")
 
-ndiv = 2
+ndiv = 16
 
-indices = 2:8
+indices = 2:42
 nₜ = length(indices)
 L₂_𝒖   = zeros(nₜ)
 Hₑ_𝒖   = zeros(nₜ)

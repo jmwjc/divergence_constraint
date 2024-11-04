@@ -3,7 +3,7 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-n = 8
+n = 32
 
 # nx = 2
 # filename = "patchtest_"
@@ -19,8 +19,8 @@ n = 8
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
-# filename = "cook_tri3_"
-# BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=false)
+filename = "cook_quad_"
+BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=true)
 
 # filename = "cantilever_tri6_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=2)
@@ -49,31 +49,31 @@ n = 8
 # filename = "./msh/plate_with_hole_b_304.msh"
 # bubblemsh(filename,[2.5,2.5,0.0],[1.5,1.5,0.0],2698-304,0.085,0.07, maxiter=2000)
 
-n = 2
+# n = 8
 # n₁ = 68
 # n₂ = 32
-n₁ = 2*n
-n₂ = n
-c₁ = 1.675
-c₂ = 1.708
-c₃ = 1.965
-dx₁ = 0.25π/n₂
-dx₂ = 4*(c₁-1)/(c₁^n₁-1)
-dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
-dx₄ = 5*(c₂-1)/(c₂^n₂-1)
-dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
-err1 = 1 - dx₂/dx₁
-err2 = 1 - dx₄/dx₃
-err3 = 1 - dx₅/dx₁
-if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
+# n₁ = 2*n
+# n₂ = n
+# c₁ = 1.1145
+# c₂ = 1.0634
+# c₃ = 1.1538
+# dx₁ = 0.25π/n₂
+# dx₂ = 4*(c₁-1)/(c₁^n₁-1)
+# dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
+# dx₄ = 5*(c₂-1)/(c₂^n₂-1)
+# dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
+# err1 = 1 - dx₂/dx₁
+# err2 = 1 - dx₄/dx₃
+# err3 = 1 - dx₅/dx₁
+# if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
 
-    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri6_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃),order=2)
-    println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
-else
-    error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
-end
+#     BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃),order=1)
+#     println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# else
+#     error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
+# end
 
 # 1    -> c₁ = 1.3700, c₂ =       , c₃ = 5.8000
 # 2    -> c₁ = 1.7000, c₂ = 1.5000, c₃ = 2.0000
@@ -157,7 +157,7 @@ end
 # 32-66-> c₁ = 1.02483, c₂ = 1.016, c₃ = 1.03326
 # 32-67-> c₁ = 1.02408, c₂ = 1.01743, c₃ = 1.0324
 # 32-68-> c₁ = 1.023355, c₂ = 1.01884, c₃ = 1.03155
-# 33   -> c₁ = 1.0250, c₂ = 1.0150, c₃ = 1.0350
+# 33   -> c₁ = 1.0256, c₂ = 1.0126, c₃ = 1.0340
 # 34   -> c₁ = 1.0250, c₂ = 1.0150, c₃ = 1.0350
 # 35   -> c₁ = 1.0250, c₂ = 1.0110, c₃ = 1.0300
 # 36   -> c₁ = 1.0250, c₂ = 1.0110, c₃ = 1.0300

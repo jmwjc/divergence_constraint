@@ -10,15 +10,15 @@ include("import_plate_with_hole.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 2
+ndiv = 4
 @timeit to "import data" begin
-n = 2
+n = 4
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_convergence_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_convergence_tri3_"*string(n)*".msh",n)
+# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
 # nx = 7;ny = 3
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
-elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# nx = 7;ny = 3
+elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri6_"*string(n)*".msh",n)
+# nx = 68;ny = 32
 # elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
 
 nₚ = length(nodes_p)
@@ -31,9 +31,9 @@ nᵤ = length(nodes)
 # T = 1.0e3
 # E = 3.0e6
 T = 1.0
-E = 1.0e0
-ν = 0.3
-# ν = 0.5-1e-8
+E = 1.0e4
+# ν = 0.3
+ν = 0.5-1e-8
 Ē = E/(1.0-ν^2)
 ν̄ = ν/(1.0-ν)
 Cᵢᵢᵢᵢ = E/(1+ν)/(1-2*ν)*(1-ν)
@@ -42,28 +42,28 @@ Cᵢⱼᵢⱼ = E/(1+ν)/2
 a = 1
 b = 5
 
-n = 2
-u(x,y) = (1+2*x+3*y)^n
-v(x,y) = (4+5*x+6*y)^n
-∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
-∂u∂y(x,y) = 3*n*(1+2*x+3*y)^abs(n-1)
-∂v∂x(x,y) = 5*n*(4+5*x+6*y)^abs(n-1)
-∂v∂y(x,y) = 6*n*(4+5*x+6*y)^abs(n-1)
-∂²u∂x²(x,y)  = 4*n*(n-1)*(1+2*x+3*y)^abs(n-2)
-∂²u∂x∂y(x,y) = 6*n*(n-1)*(1+2*x+3*y)^abs(n-2)
-∂²u∂y²(x,y)  = 9*n*(n-1)*(1+2*x+3*y)^abs(n-2)
-∂²v∂x²(x,y)  = 25*n*(n-1)*(4+5*x+6*y)^abs(n-2)
-∂²v∂x∂y(x,y) = 30*n*(n-1)*(4+5*x+6*y)^abs(n-2)
-∂²v∂y²(x,y)  = 36*n*(n-1)*(4+5*x+6*y)^abs(n-2)
+# n = 2
+# u(x,y) = (1+2*x+3*y)^n
+# v(x,y) = (4+5*x+6*y)^n
+# ∂u∂x(x,y) = 2*n*(1+2*x+3*y)^abs(n-1)
+# ∂u∂y(x,y) = 3*n*(1+2*x+3*y)^abs(n-1)
+# ∂v∂x(x,y) = 5*n*(4+5*x+6*y)^abs(n-1)
+# ∂v∂y(x,y) = 6*n*(4+5*x+6*y)^abs(n-1)
+# ∂²u∂x²(x,y)  = 4*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+# ∂²u∂x∂y(x,y) = 6*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+# ∂²u∂y²(x,y)  = 9*n*(n-1)*(1+2*x+3*y)^abs(n-2)
+# ∂²v∂x²(x,y)  = 25*n*(n-1)*(4+5*x+6*y)^abs(n-2)
+# ∂²v∂x∂y(x,y) = 30*n*(n-1)*(4+5*x+6*y)^abs(n-2)
+# ∂²v∂y²(x,y)  = 36*n*(n-1)*(4+5*x+6*y)^abs(n-2)
 
-# r(x,y) = (x^2+y^2)^0.5
-# θ(x,y) = atan(y/x)
-# u(x,y) = T*a*(1+ν̄)/2/Ē*(r(x,y)/a*2/(1+ν̄)*cos(θ(x,y)) + a/r(x,y)*(4/(1+ν̄)*cos(θ(x,y))+cos(3*θ(x,y))) - a^3/r(x,y)^3*cos(3*θ(x,y)))
-# v(x,y) = T*a*(1+ν̄)/2/Ē*( -r(x,y)/a*2*ν̄/(1+ν̄)*sin(θ(x,y)) - a/r(x,y)*(2*(1-ν̄)/(1+ν̄)*sin(θ(x,y))-sin(3*θ(x,y))) - a^3/r(x,y)^3*sin(3*θ(x,y)) )
-# ∂u∂x(x,y) = T/Ē*(1 + a^2/2/r(x,y)^2*((ν̄-3)*cos(2*θ(x,y))-2*(1+ν̄)*cos(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*cos(4*θ(x,y)))
-# ∂u∂y(x,y) = T/Ē*(-a^2/r(x,y)^2*((ν̄+5)/2*sin(2*θ(x,y))+(1+ν̄)*sin(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*sin(4*θ(x,y)))
-# ∂v∂x(x,y) = T/Ē*(-a^2/r(x,y)^2*((ν̄-3)/2*sin(2*θ(x,y))+(1+ν̄)*sin(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*sin(4*θ(x,y)))
-# ∂v∂y(x,y) = T/Ē*(-ν̄ - a^2/2/r(x,y)^2*((1-3*ν̄)*cos(2*θ(x,y))-2*(1+ν̄)*cos(4*θ(x,y))) - 3*a^4/2/r(x,y)^4*(1+ν̄)*cos(4*θ(x,y)))
+r(x,y) = (x^2+y^2)^0.5
+θ(x,y) = atan(y/x)
+u(x,y) = T*a*(1+ν̄)/2/Ē*(r(x,y)/a*2/(1+ν̄)*cos(θ(x,y)) + a/r(x,y)*(4/(1+ν̄)*cos(θ(x,y))+cos(3*θ(x,y))) - a^3/r(x,y)^3*cos(3*θ(x,y)))
+v(x,y) = T*a*(1+ν̄)/2/Ē*( -r(x,y)/a*2*ν̄/(1+ν̄)*sin(θ(x,y)) - a/r(x,y)*(2*(1-ν̄)/(1+ν̄)*sin(θ(x,y))-sin(3*θ(x,y))) - a^3/r(x,y)^3*sin(3*θ(x,y)) )
+∂u∂x(x,y) = T/Ē*(1 + a^2/2/r(x,y)^2*((ν̄-3)*cos(2*θ(x,y))-2*(1+ν̄)*cos(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*cos(4*θ(x,y)))
+∂u∂y(x,y) = T/Ē*(-a^2/r(x,y)^2*((ν̄+5)/2*sin(2*θ(x,y))+(1+ν̄)*sin(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*sin(4*θ(x,y)))
+∂v∂x(x,y) = T/Ē*(-a^2/r(x,y)^2*((ν̄-3)/2*sin(2*θ(x,y))+(1+ν̄)*sin(4*θ(x,y))) + 3*a^4/2/r(x,y)^4*(1+ν̄)*sin(4*θ(x,y)))
+∂v∂y(x,y) = T/Ē*(-ν̄ - a^2/2/r(x,y)^2*((1-3*ν̄)*cos(2*θ(x,y))-2*(1+ν̄)*cos(4*θ(x,y))) - 3*a^4/2/r(x,y)^4*(1+ν̄)*cos(4*θ(x,y)))
 
 ε₁₁(x,y) = ∂u∂x(x,y)
 ε₂₂(x,y) = ∂v∂y(x,y)
@@ -100,19 +100,19 @@ prescribe!(elements["Ωᵘ"],:b₁=>(x,y,z)->b₁(x,y))
 prescribe!(elements["Ωᵘ"],:b₂=>(x,y,z)->b₂(x,y))
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
-prescribe!(elements["Γᵗ"],:α=>(x,y,z)->1e12)
-prescribe!(elements["Γᵗ"],:g₁=>(x,y,z)->u(x,y)) 
-prescribe!(elements["Γᵗ"],:g₂=>(x,y,z)->v(x,y)) 
-prescribe!(elements["Γᵗ"],:n₁₁=>(x,y,z,n₁,n₂)->1.0)
-prescribe!(elements["Γᵗ"],:n₂₂=>(x,y,z,n₁,n₂)->1.0)
-prescribe!(elements["Γᵗ"],:n₁₂=>(x,y,z)->0.0)
+# prescribe!(elements["Γᵗ"],:α=>(x,y,z)->1e12)
+# prescribe!(elements["Γᵗ"],:g₁=>(x,y,z)->u(x,y)) 
+# prescribe!(elements["Γᵗ"],:g₂=>(x,y,z)->v(x,y)) 
+# prescribe!(elements["Γᵗ"],:n₁₁=>(x,y,z,n₁,n₂)->1.0)
+# prescribe!(elements["Γᵗ"],:n₂₂=>(x,y,z,n₁,n₂)->1.0)
+# prescribe!(elements["Γᵗ"],:n₁₂=>(x,y,z)->0.0)
 prescribe!(elements["Γᵍᵘ"],:α=>(x,y,z)->1e12)
 prescribe!(elements["Γᵍᵘ"],:g₁=>(x,y,z)->u(x,y))
 prescribe!(elements["Γᵍᵘ"],:g₂=>(x,y,z)->v(x,y))
-prescribe!(elements["Γᵍᵘ"],:n₁₁=>(x,y,z)->1.0)
-prescribe!(elements["Γᵍᵘ"],:n₂₂=>(x,y,z)->1.0)
-# prescribe!(elements["Γᵍᵘ"],:n₁₁=>(x,y,z,n₁,n₂)->abs(n₁))
-# prescribe!(elements["Γᵍᵘ"],:n₂₂=>(x,y,z,n₁,n₂)->abs(n₂))
+# prescribe!(elements["Γᵍᵘ"],:n₁₁=>(x,y,z)->1.0)
+# prescribe!(elements["Γᵍᵘ"],:n₂₂=>(x,y,z)->1.0)
+prescribe!(elements["Γᵍᵘ"],:n₁₁=>(x,y,z,n₁,n₂)->abs(n₁))
+prescribe!(elements["Γᵍᵘ"],:n₂₂=>(x,y,z,n₁,n₂)->abs(n₂))
 prescribe!(elements["Γᵍᵘ"],:n₁₂=>(x,y,z,n₁,n₂)->0.0)
 prescribe!(elements["Ωᵍᵘ"],:u=>(x,y,z)->u(x,y))
 prescribe!(elements["Ωᵍᵘ"],:v=>(x,y,z)->v(x,y))
@@ -126,11 +126,11 @@ prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
-# 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
-𝑓 = [
-    ∫∫vᵢbᵢdxdy=>elements["Ωᵘ"],
-    ∫vᵢtᵢds=>elements["Γᵗ"],
-]
+𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
+# 𝑓 = [
+#     ∫∫vᵢbᵢdxdy=>elements["Ωᵘ"],
+#     ∫vᵢtᵢds=>elements["Γᵗ"],
+# ]
 
 kᵘᵘ = zeros(2*nᵤ,2*nᵤ)
 kᵖᵖ = zeros(nₚ,nₚ)
