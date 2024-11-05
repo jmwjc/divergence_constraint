@@ -1,5 +1,5 @@
 
-n = 4;
+n = 32;
 
 Point(1) = {0.0, 0.0, 0.0};
 Point(2) = {48.0, 44.0, 0.0};
@@ -25,10 +25,10 @@ Physical Curve("Γᵍ") = {4};
 // Physical Curve("Γ") = {1,2,3,4};
 Physical Surface("Ω") = {1};
 
-Mesh.Renumber = 1;
+// Mesh.Renumber = 1;
 // Mesh.Algorithm = 1;
 // Mesh.MshFileVersion = 2;
-// Mesh 2;
+Mesh 2;
+// RecombineMesh;
+// SetOrder 1;
 Mesh.SecondOrderIncomplete = 1;
-RecombineMesh;
-SetOrder 2;

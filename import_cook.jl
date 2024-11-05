@@ -48,7 +48,7 @@ function import_linear_mix(filename1::String,filename2::String,n)
     s₂ = s*44.0/n*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
 
-    integrationOrder_Ω = 3
+    integrationOrder_Ω = 2
     integrationOrder_Ωᵍ = 8
     integrationOrder_Γ = 2
 
