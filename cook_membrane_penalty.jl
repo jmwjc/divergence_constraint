@@ -1,7 +1,7 @@
 using Revise
 using TimerOutputs 
 using SparseArrays, Pardiso
-using CairoMakie
+using CairoMakie, XLSX, WriteVTK
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
@@ -10,16 +10,12 @@ include("import_cook.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 2
+ndiv = 4
+poly = "quad"
 @timeit to "import data" begin
-n = 2
-elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-# nx = 7;ny = 3
-# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
-# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri6_"*string(n)*".msh",n)
-# nx = 68;ny = 32
-# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
-
+n = 4
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cook_"*poly*"_"*string(ndiv)*".msh","./msh/cook_tri3_"*string(n)*".msh",n)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cook_"*poly*"_"*string(ndiv)*".msh","./msh/cook_quad_"*string(n)*".msh",n)
 nₚ = length(nodes_p)
 end
 
@@ -30,7 +26,7 @@ nᵤ = length(nodes)
 # T = 1.0e3
 # E = 3.0e6
 P = 6.25
-E = 70
+E = 70.0
 # ν = 0.3
 ν = 0.5-1e-8
 Ē = E/(1.0-ν^2)
@@ -88,25 +84,73 @@ k = get_matrix(ps,k,:N)
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]
 𝑝 = d[2*nᵤ+1:2*nᵤ+nₚ]
+push!(nodes,:u₁=>𝑢₁,:u₂=>𝑢₂)
+push!(nodes_p,:p=>𝑝)
 
 # @timeit to "plot figure" begin
-# fig = Figure()
+# fig = Figure(figure_padding = 1,size = (400,600))
 # ind = 100
 # ax = Axis(fig[1,1], 
 #     aspect = DataAspect(), 
-#     xticksvisible = false,
+#     xticksvisible = true,
 #     xticklabelsvisible=false, 
 #     yticksvisible = false, 
 #     yticklabelsvisible=false,
+#     backgroundcolor = :transparent,
 # )
 # hidespines!(ax)
 # hidedecorations!(ax)
-# xs = LinRange(0, 48, 4*ind)
-# ys = LinRange(-6, 6, ind)
-# zs = zeros(4*ind,ind)
-# 𝗠 = zeros(21)
-# for (i,x) in enumerate(xs)
-#     for (j,y) in enumerate(ys)
+# index = [1,2,3,1]
+# α = 1.0
+# for elm in elements["Ωᵘ"]
+#     x = [node.x+α*node.u₁ for node in elm.𝓒[index]]
+#     y = [node.y+α*node.u₂ for node in elm.𝓒[index]]
+#     lines!(ax,x,y,color=:black,linewidth = 3)
+# end
+# vertices = [[node.x+α*node.u₁ for node in nodes] [node.y+α*node.u₂ for node in nodes]]
+colors = zeros(nᵤ)
+𝗠 = zeros(21)
+for (i,node) in enumerate(nodes)
+    x = node.x
+    y = node.y
+    indices = sp(x,y,0.0)
+    ni = length(indices)
+    𝓒 = [nodes_p[i] for i in indices]
+    data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+    ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+    𝓖 = [ξ]
+    a = type(𝓒,𝓖)
+    set𝝭!(a)
+    p = 0.0
+    N = ξ[:𝝭]
+    for (k,xₖ) in enumerate(𝓒)
+        p += N[k]*xₖ.p
+    end
+    colors[i] = p
+end
+# faces = zeros(Int,nₑ,3)
+# for (e,elm) in enumerate(elements["Ωᵘ"])
+#     faces[e,:] .= [xᵢ.𝐼 for xᵢ in elm.𝓒[1:3]]
+# end
+# mesh!(vertices,faces,color=colors,shading = NoShading,colormap=:haline,colorrange = (-50,15))
+
+# coord = [[node.x+α*node.u₁ for node in nodes] [node.y+α*node.u₂ for node in nodes]]
+
+# x = [node.x+α*node.u₁ for node in nodes]
+# y = [node.y+α*node.u₂ for node in nodes]
+# tricontourf!(ax,x,y,colors,levels=collect(-60:5:20), colormap=Reverse(:deep))
+# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
+# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
+# Colorbar(fig[1,2], limits=(-50,15), colormap=:haline)
+# Colorbar(fig[1,2], colormap=:haline)
+# save("./png/cook_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
+# end
+
+# XLSX.openxlsx("./xlsx/contour.xlsx", mode = "rw") do xf
+#     sheet = xf[1]
+#     for (i,node) in enumerate(nodes)
+#         x = node.x
+#         y = node.y
 #         indices = sp(x,y,0.0)
 #         ni = length(indices)
 #         𝓒 = [nodes_p[i] for i in indices]
@@ -120,14 +164,20 @@ k = get_matrix(ps,k,:N)
 #         for (k,xₖ) in enumerate(𝓒)
 #             p += N[k]*xₖ.p
 #         end
-#         zs[i,j] = p
+#         sheet["A"*string(i)] = round(x + α*node.u₁, digits=2)
+#         sheet["B"*string(i)] = round(y + α*node.u₂, digits=2)
+#         sheet["C"*string(i)] = round(p, digits=2)
 #     end
 # end
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
-# Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# save("./png/cantilever_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-# end
 
+# points = [[node.x+α*node.u₁ for node in nodes]';[node.y+α*node.u₂ for node in nodes]';zeros(1,nᵤ)]
+# cells = [MeshCell(VTKCellTypes.VTK_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_TRIANGLE,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# cells = [MeshCell(VTKCellTypes.VTK_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# cells = [MeshCell(VTKCellTypes.VTK_QUADRATIC_QUAD,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# vtk_grid("./vtk/cook_"*poly*"_"*string(ndiv)*"_"*string(nₚ),points,cells) do vtk
+#     vtk["𝑝"] = colors
+# end
 show(to)
+println(𝑢₂[3])
 # fig

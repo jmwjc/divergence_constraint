@@ -3,7 +3,7 @@ using BenchmarkExample
 import Gmsh: gmsh
 using BubbleMsh
 
-n = 32
+n = 64
 
 # nx = 2
 # filename = "patchtest_"
@@ -19,8 +19,8 @@ n = 32
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
-filename = "cook_quad_"
-BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=true)
+filename = "cook_tri3_"
+BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=false)
 
 # filename = "cantilever_tri6_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=2)
