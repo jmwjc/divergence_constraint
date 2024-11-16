@@ -1,8 +1,9 @@
 
-Geometry.MatchMeshTolerance = 1e-2;
+// Geometry.MatchMeshTolerance = 1e-2;
+Mesh.RecombineAll = 1;
 
 L = 1;
-n = 1;
+n = 8;
 
 Point(1) = {0.0,0.0,0.0};
 Point(2) = {  L,0.0,0.0};
@@ -120,4 +121,5 @@ Transfinite Surface{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20};
 Transfinite Volume{1,2,3,4};
 
 Mesh 3;
-RecombineMesh;
+
+// RecombineMesh;
