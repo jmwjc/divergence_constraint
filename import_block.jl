@@ -48,9 +48,10 @@ function import_linear_mix(filename1::String,filename2::String,n)
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
     s = 1.5
-    s₁ = s*44.0/n*ones(length(nodes_p))
-    s₂ = s*44.0/n*ones(length(nodes_p))
-    push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
+    s₁ = s/n*ones(length(nodes_p))
+    s₂ = s/n*ones(length(nodes_p))
+    s₃ = s/n*ones(length(nodes_p))
+    push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₃)
 
     integrationOrder_Ω = 2
     integrationOrder_Ωᵍ = 8
@@ -61,47 +62,44 @@ function import_linear_mix(filename1::String,filename2::String,n)
     nodes = get𝑿ᵢ()
     elements["Ωᵘ"] = getElements(nodes,entities["Ω"], integrationOrder_Ω)
     elements["Ωᵍᵘ"] = getElements(nodes, entities["Ω"], integrationOrder_Ωᵍ)
-    elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
     elements["Γᵗ"] = getElements(nodes,entities["Γᵗ"], integrationOrder_Γ, normal = true)
-    elements["Γᵍᵘ"] = getElements(nodes,entities["Γᵍ"], integrationOrder_Γ, normal = true)
+    elements["Γᵍ"] = getElements(nodes,entities["Γᵍ"], integrationOrder_Γ, normal = true)
+    elements["Γʳ"] = getElements(nodes,entities["Γʳ"],integrationOrder_Γ,normal=true)
 
-    push!(elements["Ωᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
-    push!(elements["Ωᵍᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
-    push!(elements["∂Ωᵘ"],:𝝭)
+    push!(elements["Ωᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y,:∂𝝭∂z)
+    push!(elements["Ωᵍᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y,:∂𝝭∂z)
     push!(elements["Γᵗ"],:𝝭)
-    push!(elements["Γᵍᵘ"],:𝝭)
+    push!(elements["Γᵍ"],:𝝭)
+    push!(elements["Γʳ"],:𝝭)
 
     set∇𝝭!(elements["Ωᵘ"])
-    set𝝭!(elements["∂Ωᵘ"])
     set∇𝝭!(elements["Ωᵍᵘ"])
     set𝝭!(elements["Γᵗ"])
-    set𝝭!(elements["Γᵍᵘ"])
+    set𝝭!(elements["Γᵍ"])
+    set𝝭!(elements["Γʳ"])
 
-    type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
+    type = ReproducingKernel{:Linear3D,:□,:CubicSpline}
     # type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
     sp = RegularGrid(xᵖ,yᵖ,zᵖ,n = 3,γ = 5)
     elements["Ωᵖ"] = getElements(nodes_p, entities["Ω"], type, integrationOrder_Ω, sp)
-    elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
     elements["Ωᵍᵖ"] = getElements(nodes_p, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
     elements["Γᵍᵖ"] = getElements(nodes_p, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
 
-    nₘ = 6
+    nₘ = 10
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
-    push!(elements["Ωᵖ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["∂Ωᵖ"], :𝝭)
+    ∂𝗠∂z = zeros(nₘ)
+    push!(elements["Ωᵖ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂𝝭∂z)
     push!(elements["Γᵍᵖ"], :𝝭)
-    push!(elements["Ωᵖ"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
-    push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
+    push!(elements["Ωᵖ"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂𝗠∂z=>∂𝗠∂z)
     push!(elements["Γᵍᵖ"], :𝗠=>𝗠)
     push!(elements["Ωᵍᵖ"], :𝝭)
     push!(elements["Ωᵍᵖ"], :𝗠=>𝗠)
 
     set∇𝝭!(elements["Ωᵖ"])
-    set𝝭!(elements["∂Ωᵖ"])
-    set𝝭!(elements["Ωᵍᵖ"])
-    set𝝭!(elements["Γᵍᵖ"])
+    # set𝝭!(elements["Ωᵍᵖ"])
+    # set𝝭!(elements["Γᵍᵖ"])
 
     gmsh.finalize()
 
@@ -120,9 +118,10 @@ function import_quadratic_mix(filename1::String,filename2::String,n)
     zᵖ = nodes_p.z
     Ω = getElements(nodes_p, entities["Ω"])
     s = 2.5
-    s₁ = s*44.0/n*ones(length(nodes_p))
-    s₂ = s*44.0/n*ones(length(nodes_p))
-    push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
+    s₁ = s/n*ones(length(nodes_p))
+    s₂ = s/n*ones(length(nodes_p))
+    s₃ = s/n*ones(length(nodes_p))
+    push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₃)
 
     integrationOrder_Ω = 4
     integrationOrder_Ωᵍ = 8
@@ -136,8 +135,8 @@ function import_quadratic_mix(filename1::String,filename2::String,n)
     elements["Γᵗ"] = getElements(nodes,entities["Γᵗ"], integrationOrder_Γ, normal = true)
     elements["Γᵍᵘ"] = getElements(nodes,entities["Γᵍ"], integrationOrder_Γ, normal = true)
 
-    push!(elements["Ωᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
-    push!(elements["Ωᵍᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    push!(elements["Ωᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y,:∂𝝭∂z)
+    push!(elements["Ωᵍᵘ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y,:∂𝝭∂z)
     push!(elements["Γᵗ"],:𝝭)
     push!(elements["Γᵍᵘ"],:𝝭)
 
@@ -147,19 +146,19 @@ function import_quadratic_mix(filename1::String,filename2::String,n)
     set𝝭!(elements["Γᵍᵘ"])
 
     # type = ReproducingKernel{:Linear2D,:□,:CubicSpline}
-    type = ReproducingKernel{:Quadratic2D,:□,:CubicSpline}
+    type = ReproducingKernel{:Quadratic3D,:□,:CubicSpline}
     sp = RegularGrid(xᵖ,yᵖ,zᵖ,n = 3,γ = 5)
     elements["Ωᵖ"] = getElements(nodes_p, entities["Ω"], type, integrationOrder_Ω, sp)
     elements["Ωᵍᵖ"] = getElements(nodes_p, entities["Ω"], type,  integrationOrder_Ωᵍ, sp)
     elements["Γᵍᵖ"] = getElements(nodes_p, entities["Γᵍ"],type,  integrationOrder_Γ, sp, normal = true)
 
-    nₘ = 21
+    nₘ = 55
     𝗠 = zeros(nₘ)
     ∂𝗠∂x = zeros(nₘ)
     ∂𝗠∂y = zeros(nₘ)
-    push!(elements["Ωᵖ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    push!(elements["Ωᵖ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y, :∂𝝭∂z)
     push!(elements["Γᵍᵖ"], :𝝭)
-    push!(elements["Ωᵖ"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y)
+    push!(elements["Ωᵖ"],  :𝗠=>𝗠, :∂𝗠∂x=>∂𝗠∂x, :∂𝗠∂y=>∂𝗠∂y, :∂𝗠∂z=>∂𝗠∂z)
     push!(elements["Γᵍᵖ"], :𝗠=>𝗠)
     push!(elements["Ωᵍᵖ"], :𝝭)
     push!(elements["Ωᵍᵖ"], :𝗠=>𝗠)
@@ -167,21 +166,6 @@ function import_quadratic_mix(filename1::String,filename2::String,n)
     set∇𝝭!(elements["Ωᵖ"])
     set𝝭!(elements["Ωᵍᵖ"])
     set𝝭!(elements["Γᵍᵖ"])
-
-    filename1s = split(filename1,"_")
-    if filename1s[2] == "quad8"
-        filename3 = replace(filename1,"quad8"=>"quad")
-        gmsh.open(filename3)
-        entities = getPhysicalGroups()
-    end
-
-    elements["∂Ωᵘ"] = getElements(nodes, entities["Γ"],   integrationOrder_Γ, normal = true)
-    push!(elements["∂Ωᵘ"],:𝝭)
-    set𝝭!(elements["∂Ωᵘ"])
-    elements["∂Ωᵖ"] = getElements(nodes_p, entities["Γ"], type, integrationOrder_Γ, sp)
-    push!(elements["∂Ωᵖ"], :𝝭)
-    push!(elements["∂Ωᵖ"], :𝗠=>𝗠)
-    set𝝭!(elements["∂Ωᵖ"])
 
     gmsh.finalize()
 

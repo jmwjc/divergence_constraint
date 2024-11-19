@@ -1,9 +1,9 @@
 
 // Geometry.MatchMeshTolerance = 1e-2;
-Mesh.RecombineAll = 1;
+Mesh.RecombineAll = 0;
 
 L = 1;
-n = 8;
+n = 16;
 
 Point(1) = {0.0,0.0,0.0};
 Point(2) = {  L,0.0,0.0};
@@ -79,10 +79,10 @@ Curve Loop(18) = {10,32,-22,-33};
 Curve Loop(19) = {11,33,-23,-31};
 Curve Loop(20) = {12,30,-24,-33};
 
-Plane Surface(1) = {1};
-Plane Surface(2) = {2};
-Plane Surface(3) = {3};
-Plane Surface(4) = {4};
+Plane Surface(1) = {-1};
+Plane Surface(2) = {-2};
+Plane Surface(3) = {-3};
+Plane Surface(4) = {-4};
 Plane Surface(5) = {5};
 Plane Surface(6) = {6};
 Plane Surface(7) = {7};
@@ -100,10 +100,10 @@ Plane Surface(18) = {18};
 Plane Surface(19) = {19};
 Plane Surface(20) = {20};
 
-Surface Loop(1) = {-1,5,9,16,17,18};
-Surface Loop(2) = {-2,6,10,11,-20,-17};
-Surface Loop(3) = {-3,7,12,13,19,20};
-Surface Loop(4) = {-4,8,14,15,-18,-19};
+Surface Loop(1) = {1,5,9,16,17,18};
+Surface Loop(2) = {2,6,10,11,-20,-17};
+Surface Loop(3) = {3,7,12,13,19,20};
+Surface Loop(4) = {4,8,14,15,-18,-19};
 
 Volume(1) = {1};
 Volume(2) = {2};
