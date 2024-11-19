@@ -1,6 +1,7 @@
 
 using TimerOutputs 
-using SparseArrays, Pardiso, LinearAlgebra
+# using Pardiso
+using SparseArrays, LinearAlgebra
 using WriteVTK
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫qpdΩ, ∫εᵈᵢⱼσᵈᵢⱼdΩ, ∫p∇udΩ, ∫vᵢbᵢdΩ, ∫vᵢtᵢdΓ, ∫vᵢgᵢdΓ, Hₑ
@@ -8,10 +9,10 @@ using ApproxOperator.Elasticity: ∫qpdΩ, ∫εᵈᵢⱼσᵈᵢⱼdΩ, ∫p∇
 include("import_block.jl")
 
 const to = TimerOutput()
-ps = MKLPardisoSolver()
+# ps = MKLPardisoSolver()
 
-ndiv = 16
-ndiv_p = 16
+ndiv = 2
+ndiv_p = 2
 poly = "tet4"
 @timeit to "import data" begin
 elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
@@ -214,13 +215,15 @@ fᵘ = zeros(3*nᵤ)
 𝑓(fᵘ)
 end
 
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+# k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
 d = zeros(3*nᵤ+nₚ)
 
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-@timeit to "solve" pardiso(ps,d,k,f)
+# set_matrixtype!(ps, -2)
+# k = get_matrix(ps,k,:N)
+# @timeit to "solve" pardiso(ps,d,k,f)
+d = k\f
 
 𝑢₁ = d[1:3:3*nᵤ]
 𝑢₂ = d[2:3:3*nᵤ]
@@ -259,6 +262,7 @@ end
 points = [[node.x+α*node.u₁ for node in nodes]';[node.y+α*node.u₂ for node in nodes]';[node.z+α*node.u₃ for node in nodes]']
 cells = [MeshCell(VTKCellTypes.VTK_TETRA,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
 vtk_grid("./vtk/block_"*poly*"_"*string(ndiv)*"_"*string(nₚ),points,cells) do vtk
+    vtk["u"] = (𝑢₁,𝑢₂,𝑢₃)
     vtk["𝑝"] = colors
 end
 
