@@ -1,6 +1,6 @@
 
 using TimerOutputs 
-# using Pardiso
+using Pardiso
 using SparseArrays, LinearAlgebra
 using WriteVTK
 using ApproxOperator
@@ -9,10 +9,10 @@ using ApproxOperator.Elasticity: ∫qpdΩ, ∫εᵈᵢⱼσᵈᵢⱼdΩ, ∫p∇
 include("import_block.jl")
 
 const to = TimerOutput()
-# ps = MKLPardisoSolver()
+ps = MKLPardisoSolver()
 
-ndiv = 2
-ndiv_p = 2
+ndiv = 8
+ndiv_p = 4
 poly = "tet4"
 @timeit to "import data" begin
 elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
@@ -215,15 +215,15 @@ fᵘ = zeros(3*nᵤ)
 𝑓(fᵘ)
 end
 
-# k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
-k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
+k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+# k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
 d = zeros(3*nᵤ+nₚ)
 
-# set_matrixtype!(ps, -2)
-# k = get_matrix(ps,k,:N)
-# @timeit to "solve" pardiso(ps,d,k,f)
-d = k\f
+set_matrixtype!(ps, -2)
+k = get_matrix(ps,k,:N)
+@timeit to "solve" pardiso(ps,d,k,f)
+# d = k\f
 
 𝑢₁ = d[1:3:3*nᵤ]
 𝑢₂ = d[2:3:3*nᵤ]

@@ -46,7 +46,6 @@ function import_linear_mix(filename1::String,filename2::String,n)
     xᵖ = nodes_p.x
     yᵖ = nodes_p.y
     zᵖ = nodes_p.z
-    Ω = getElements(nodes_p, entities["Ω"])
     s = 1.5
     s₁ = s/n*ones(length(nodes_p))
     s₂ = s/n*ones(length(nodes_p))
