@@ -3,7 +3,7 @@
 Mesh.RecombineAll = 1;
 
 L = 1;
-n = 1;
+n = 16;
 
 Point(1) = {0.0,0.0,0.0};
 Point(2) = {  L,0.0,0.0};
