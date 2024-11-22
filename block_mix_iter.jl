@@ -10,9 +10,9 @@ include("import_block.jl")
 
 ps = MKLPardisoSolver()
 
-ndiv = 4
+ndiv = 8
 
-indices = 1:8
+indices = 7:16
 
 uₐ = zeros(length(indices))
 

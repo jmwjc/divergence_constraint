@@ -1,9 +1,9 @@
 
 // Geometry.MatchMeshTolerance = 1e-2;
-Mesh.RecombineAll = 0;
+Mesh.RecombineAll = 1;
 
 L = 1;
-n = 16;
+n = 1;
 
 Point(1) = {0.0,0.0,0.0};
 Point(2) = {  L,0.0,0.0};

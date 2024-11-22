@@ -11,8 +11,8 @@ include("import_block.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 8
-ndiv_p = 4
+ndiv = 2
+ndiv_p = 2
 poly = "tet4"
 @timeit to "import data" begin
 elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
@@ -36,6 +36,16 @@ prescribe!(elements["Ωᵖ"],:ν=>(x,y,z)->ν)
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z)->0.0)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z)->0.0)
 prescribe!(elements["Γᵗ"],:t₃=>(x,y,z)->-P)
+prescribe!(elements["Γᵗ"],:α=>(x,y,z)->1e12*E)
+prescribe!(elements["Γᵗ"],:g₁=>(x,y,z)->0.0)
+prescribe!(elements["Γᵗ"],:g₂=>(x,y,z)->0.0)
+prescribe!(elements["Γᵗ"],:g₃=>(x,y,z)->0.0)
+prescribe!(elements["Γᵗ"],:n₁₁=>(x,y,z,n₁,n₂,n₃)->1.0)
+prescribe!(elements["Γᵗ"],:n₂₂=>(x,y,z,n₁,n₂,n₃)->1.0)
+prescribe!(elements["Γᵗ"],:n₃₃=>(x,y,z,n₁,n₂,n₃)->0.0)
+prescribe!(elements["Γᵗ"],:n₁₂=>(x,y,z)->0.0)
+prescribe!(elements["Γᵗ"],:n₁₃=>(x,y,z)->0.0)
+prescribe!(elements["Γᵗ"],:n₂₃=>(x,y,z)->0.0)
 prescribe!(elements["Γᵍ"],:α=>(x,y,z)->1e12*E)
 prescribe!(elements["Γᵍ"],:g₁=>(x,y,z)->0.0)
 prescribe!(elements["Γᵍ"],:g₂=>(x,y,z)->0.0)
@@ -198,7 +208,7 @@ prescribe!(elements["Γᵍ"],:n₂₃=>(x,y,z)->0.0)
     ∫vᵢtᵢdΓ=>elements["Γᵗ"],
     # ∫vᵢtᵢdΓ=>elements["Γᵗ"]∪elements["Γʳ"],
 ]
-𝑎ᵅ = ∫vᵢgᵢdΓ=>elements["Γᵍ"]
+𝑎ᵅ = ∫vᵢgᵢdΓ=>elements["Γᵍ"]∪elements["Γᵗ"]
 # 𝑎ᵅ = ∫vᵢgᵢdΓ=>elements["Γᵍ"]∪elements["Γᵗ"]∪elements["Γʳ"]
 
 kᵘᵘ = zeros(3*nᵤ,3*nᵤ)
