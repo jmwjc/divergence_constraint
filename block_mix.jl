@@ -2,21 +2,27 @@
 using TimerOutputs 
 using Pardiso
 using SparseArrays, LinearAlgebra
+using SharedArrays, Distributed
 using WriteVTK
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫qpdΩ, ∫εᵈᵢⱼσᵈᵢⱼdΩ, ∫p∇udΩ, ∫vᵢbᵢdΩ, ∫vᵢtᵢdΓ, ∫vᵢgᵢdΓ, Hₑ
+
+# addprocs(3)
+# println(nprocs())
+println(Threads.nthreads())
 
 include("import_block.jl")
 
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 2
+ndiv = 4
 ndiv_p = 2
-poly = "tet4"
+# poly = "tet4"
+poly = "hex8"
 @timeit to "import data" begin
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
-# elements, nodes, nodes_p = import_linear_mix("./msh/block_hex8_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_hex8_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
 end
 
 nᵤ = length(nodes)
@@ -217,6 +223,12 @@ kᵖᵘ = zeros(nₚ,3*nᵤ)
 fᵖ = zeros(nₚ)
 fᵘ = zeros(3*nᵤ)
 
+# kᵘᵘ = SharedMatrix{Float64}(3*nᵤ,3*nᵤ)
+# kᵖᵖ = SharedMatrix{Float64}(nₚ,nₚ)
+# kᵖᵘ = SharedMatrix{Float64}(nₚ,3*nᵤ)
+# fᵖ  = SharedVector{Float64}(nₚ)
+# fᵘ  = SharedVector{Float64}(3*nᵤ)
+
 @timeit to "assembly" begin
 𝑎ᵘ(kᵘᵘ)
 𝑎ᵖ(kᵖᵖ)
@@ -270,7 +282,8 @@ for (i,node) in enumerate(nodes)
 end
 α = 1.0
 points = [[node.x+α*node.u₁ for node in nodes]';[node.y+α*node.u₂ for node in nodes]';[node.z+α*node.u₃ for node in nodes]']
-cells = [MeshCell(VTKCellTypes.VTK_TETRA,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# cells = [MeshCell(VTKCellTypes.VTK_TETRA,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+cells = [MeshCell(VTKCellTypes.VTK_HEXAHEDRON,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
 vtk_grid("./vtk/block_"*poly*"_"*string(ndiv)*"_"*string(nₚ),points,cells) do vtk
     vtk["u"] = (𝑢₁,𝑢₂,𝑢₃)
     vtk["𝑝"] = colors
