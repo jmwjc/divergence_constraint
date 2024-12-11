@@ -17,7 +17,7 @@ const to = TimerOutput()
 ps = MKLPardisoSolver()
 
 ndiv = 4
-ndiv_p = 2
+ndiv_p = 4
 # poly = "tet4"
 poly = "hex8"
 @timeit to "import data" begin

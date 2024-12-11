@@ -1,20 +1,28 @@
 
+using TimerOutputs 
 using LinearAlgebra
-using Pardiso
+using Pardiso, SparseArrays
 using ApproxOperator
 using WriteVTK
 using ApproxOperator.Elasticity: ∫εᵢⱼσᵢⱼdΩ, ∫vᵢbᵢdΩ, ∫vᵢtᵢdΓ, ∫vᵢgᵢdΓ, L₂, Hₑ
+using Base.Threads
 
 include("import_block.jl")
 
+const to = TimerOutput()
+ps = MKLPardisoSolver()
+
+println(Threads.nthreads())
 ndiv = 16
 # elements, nodes = import_fem("./msh/block_"*string(ndiv)*".msh")
+@timeit to "import data" begin
 elements, nodes = import_fem("./msh/block_hex8_"*string(ndiv)*".msh")
+end
 
 nₚ = length(nodes)
 nₑ = length(elements["Ω"])
 
-240.56839
+E = 240.56839
 ν = 0.5-1e-8
 P = 80.0
 
@@ -238,15 +246,17 @@ prescribe!(elements["Γᵍ"],:n₂₃=>(x,y,z)->0.0)
 k = zeros(3*nₚ,3*nₚ)
 f = zeros(3*nₚ)
 
+@timeit to "assembly" begin
 𝑎(k)
 𝑓(f)
 𝑎ᵅ(k,f)
+end
 
 d = zeros(3*nₚ)
 
 set_matrixtype!(ps, -2)
 k = get_matrix(ps,sparse(k),:N)
-pardiso(ps,d,k,f)
+@timeit to "solve" pardiso(ps,d,k,f)
 # d = k\f
 
 # push!(nodes,:d₁=>d[1:3:end],:d₂=>d[2:3:end],:d₃=>d[3:3:end])
