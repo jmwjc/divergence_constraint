@@ -1,22 +1,24 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso, LinearAlgebra
+using SparseArrays
+# using Pardiso
+# using LinearAlgebra
 using CairoMakie
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫qpdΩ, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_cantilever.jl")
 
 const to = TimerOutput()
-ps = MKLPardisoSolver()
+# ps = MKLPardisoSolver()
 
-ndiv = 4
+ndiv = 32
 # nₚ = 243
 # poly = "tri3"
 @timeit to "import data" begin
-n = 4
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
-elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_tri6_"*string(ndiv)*".msh","./msh/cantilever_quad_"*string(n)*".msh",4*n,n)
+n = 32
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_quad8_"*string(n)*".msh",4*n,n)
 # nx = 165;ny = 23
 # elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 # elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
@@ -143,7 +145,7 @@ prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->(σ₁₁(x,y)+σ₂₂(x,y)+σ₃�
 ## End debug
 
 𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
-𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
+𝑎ᵖ = ∫qpdΩ=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
@@ -173,15 +175,15 @@ fᵘ = zeros(2*nᵤ)
 𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
 end
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
-d = zeros(2*nᵤ+nₚ)
+# d = zeros(2*nᵤ+nₚ)
 # d = k\f
 
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-# @timeit to "solve" d = k\f
-@timeit to "solve" pardiso(ps,d,k,f)
+# set_matrixtype!(ps, -2)
+# k = get_matrix(ps,k,:N)
+@timeit to "solve" d = k\f
+# @timeit to "solve" pardiso(ps,d,k,f)
 # @timeit to "solve" d = solve(ps, k, f)
 
 𝑢₁ = d[1:2:2*nᵤ]
@@ -205,48 +207,48 @@ println(log10(L₂_𝑝))
 # include("check_rank.jl")
 # println(check_rank(nodes_p),)
 
-# @timeit to "plot figure" begin
-# fig = Figure()
-# ind = 100
-# ax = Axis(fig[1,1], 
-#     aspect = DataAspect(), 
-#     xticksvisible = false,
-#     xticklabelsvisible=false, 
-#     yticksvisible = false, 
-#     yticklabelsvisible=false,
-# )
-# hidespines!(ax)
-# hidedecorations!(ax)
-# xs = LinRange(0, 48, 4*ind)
-# ys = LinRange(-6, 6, ind)
-# zs = zeros(4*ind,ind)
-# 𝗠 = zeros(21)
-# for (i,x) in enumerate(xs)
-#     for (j,y) in enumerate(ys)
-#         indices = sp(x,y,0.0)
-#         ni = length(indices)
-#         𝓒 = [nodes_p[i] for i in indices]
-#         data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-#         ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-#         𝓖 = [ξ]
-#         a = type(𝓒,𝓖)
-#         set𝝭!(a)
-#         p = 0.0
-#         N = ξ[:𝝭]
-#         for (k,xₖ) in enumerate(𝓒)
-#             p += N[k]*xₖ.p
-#         end
-#         zs[i,j] = p
-#     end
-# end
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
-# Colorbar(fig[1,2], limits=(-900,900), colormap=:lightrainbow)
-# save("./png/cantilever_mix_quad8_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-# end
+@timeit to "plot figure" begin
+fig = Figure()
+ind = 100
+ax = Axis(fig[1,1], 
+    aspect = DataAspect(), 
+    xticksvisible = false,
+    xticklabelsvisible=false, 
+    yticksvisible = false, 
+    yticklabelsvisible=false,
+)
+hidespines!(ax)
+hidedecorations!(ax)
+xs = LinRange(0, 48, 4*ind)
+ys = LinRange(-6, 6, ind)
+zs = zeros(4*ind,ind)
+𝗠 = zeros(21)
+for (i,x) in enumerate(xs)
+    for (j,y) in enumerate(ys)
+        indices = sp(x,y,0.0)
+        ni = length(indices)
+        𝓒 = [nodes_p[i] for i in indices]
+        data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+        ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+        𝓖 = [ξ]
+        a = type(𝓒,𝓖)
+        set𝝭!(a)
+        p = 0.0
+        N = ξ[:𝝭]
+        for (k,xₖ) in enumerate(𝓒)
+            p += N[k]*xₖ.p
+        end
+        zs[i,j] = p
+    end
+end
+surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
+contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
+Colorbar(fig[2,1], limits=(-900,900), colormap=:lightrainbow,vertical = false,flipaxis = false)
+save("./png/cantilever_mix_quad_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
+end
 
 show(to)
-# fig
+fig
 
 # val = eigvals(kᵖᵘ\kᵖᵖ*kᵖᵘ,kᵘᵘ)
 # val_abs = abs.(val)

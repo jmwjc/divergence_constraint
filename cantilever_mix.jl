@@ -1,6 +1,7 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
+using SparseArrays
+using Pardiso
 using CairoMakie
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫qpdΩ, ∫∫sᵢⱼsᵢⱼdxdy, ∫∫p∇udxdy, ∫∫sᵢⱼεᵢⱼdxdy, ∫pnᵢgᵢds, ∫sᵢⱼnⱼgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
@@ -10,7 +11,7 @@ include("import_cantilever.jl")
 const to = TimerOutput()
 ps = MKLPardisoSolver()
 
-ndiv = 32
+ndiv = 16
 # nₚ = 243
 # poly = "tri3"
 poly = "quad"

@@ -1,19 +1,20 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
+using SparseArrays
+# using Pardiso
 using CairoMakie, XLSX, WriteVTK
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫qpdΩ, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_cook.jl")
 
 const to = TimerOutput()
-ps = MKLPardisoSolver()
+# ps = MKLPardisoSolver()
 
-ndiv = 4
-poly = "quad"
+ndiv = 32
+poly = "tri3"
 @timeit to "import data" begin
-n = 4
+n = 32
 elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cook_"*poly*"_"*string(ndiv)*".msh","./msh/cook_tri3_"*string(n)*".msh",n)
 # elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cook_"*poly*"_"*string(ndiv)*".msh","./msh/cook_quad_"*string(n)*".msh",n)
 nₚ = length(nodes_p)
@@ -51,7 +52,7 @@ prescribe!(elements["Γᵍᵘ"],:n₂₂=>(x,y,z)->1.0)
 prescribe!(elements["Γᵍᵘ"],:n₁₂=>(x,y,z)->0.0)
 
 𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
-𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
+𝑎ᵖ = ∫qpdΩ=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
@@ -73,13 +74,15 @@ fᵘ = zeros(2*nᵤ)
 𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
 end
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+# k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
-d = zeros(2*nᵤ+nₚ)
+# d = zeros(2*nᵤ+nₚ)
+d = k\f
 
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-@timeit to "solve" pardiso(ps,d,k,f)
+# set_matrixtype!(ps, -2)
+# k = get_matrix(ps,k,:N)
+# @timeit to "solve" pardiso(ps,d,k,f)
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]
@@ -87,47 +90,48 @@ k = get_matrix(ps,k,:N)
 push!(nodes,:u₁=>𝑢₁,:u₂=>𝑢₂)
 push!(nodes_p,:p=>𝑝)
 
-# @timeit to "plot figure" begin
-# fig = Figure(figure_padding = 1,size = (400,600))
-# ind = 100
-# ax = Axis(fig[1,1], 
-#     aspect = DataAspect(), 
-#     xticksvisible = true,
-#     xticklabelsvisible=false, 
-#     yticksvisible = false, 
-#     yticklabelsvisible=false,
-#     backgroundcolor = :transparent,
-# )
-# hidespines!(ax)
-# hidedecorations!(ax)
-# index = [1,2,3,1]
-# α = 1.0
-# for elm in elements["Ωᵘ"]
-#     x = [node.x+α*node.u₁ for node in elm.𝓒[index]]
-#     y = [node.y+α*node.u₂ for node in elm.𝓒[index]]
-#     lines!(ax,x,y,color=:black,linewidth = 3)
-# end
-# vertices = [[node.x+α*node.u₁ for node in nodes] [node.y+α*node.u₂ for node in nodes]]
-colors = zeros(nᵤ)
-𝗠 = zeros(21)
-for (i,node) in enumerate(nodes)
-    x = node.x
-    y = node.y
-    indices = sp(x,y,0.0)
-    ni = length(indices)
-    𝓒 = [nodes_p[i] for i in indices]
-    data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-    ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-    𝓖 = [ξ]
-    a = type(𝓒,𝓖)
-    set𝝭!(a)
-    p = 0.0
-    N = ξ[:𝝭]
-    for (k,xₖ) in enumerate(𝓒)
-        p += N[k]*xₖ.p
-    end
-    colors[i] = p
+@timeit to "plot figure" begin
+fig = Figure(figure_padding = 1,size = (400,600))
+ind = 100
+ax = Axis(fig[1,1], 
+    aspect = DataAspect(), 
+    xticksvisible = true,
+    xticklabelsvisible=false, 
+    yticksvisible = false, 
+    yticklabelsvisible=false,
+    backgroundcolor = :transparent,
+)
+hidespines!(ax)
+hidedecorations!(ax)
+index = [1,2,3,1]
+# index = [1,2,3,4,1]
+α = 0.0
+for elm in elements["Ωᵘ"]
+    x = [node.x+α*node.u₁ for node in elm.𝓒[index]]
+    y = [node.y+α*node.u₂ for node in elm.𝓒[index]]
+    lines!(ax,x,y,color=:black,linewidth = 1.5)
 end
+# vertices = [[node.x+α*node.u₁ for node in nodes] [node.y+α*node.u₂ for node in nodes]]
+# colors = zeros(nᵤ)
+# 𝗠 = zeros(21)
+# for (i,node) in enumerate(nodes)
+#     x = node.x
+#     y = node.y
+#     indices = sp(x,y,0.0)
+#     ni = length(indices)
+#     𝓒 = [nodes_p[i] for i in indices]
+#     data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[0.0]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+#     ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+#     𝓖 = [ξ]
+#     a = type(𝓒,𝓖)
+#     set𝝭!(a)
+#     p = 0.0
+#     N = ξ[:𝝭]
+#     for (k,xₖ) in enumerate(𝓒)
+#         p += N[k]*xₖ.p
+#     end
+#     colors[i] = p
+# end
 # faces = zeros(Int,nₑ,3)
 # for (e,elm) in enumerate(elements["Ωᵘ"])
 #     faces[e,:] .= [xᵢ.𝐼 for xᵢ in elm.𝓒[1:3]]
@@ -136,15 +140,15 @@ end
 
 # coord = [[node.x+α*node.u₁ for node in nodes] [node.y+α*node.u₂ for node in nodes]]
 
-# x = [node.x+α*node.u₁ for node in nodes]
-# y = [node.y+α*node.u₂ for node in nodes]
+# xs = [node.x+α*node.u₁ for node in nodes]
+# ys = [node.y+α*node.u₂ for node in nodes]
 # tricontourf!(ax,x,y,colors,levels=collect(-60:5:20), colormap=Reverse(:deep))
-# surface!(xs,ys,zeros(4*ind,ind),color=zs,shading=NoShading,colormap=:lightrainbow)
-# contour!(xs,ys,zs,levels=-1e3:200:1e3,color=:azure)
+# surface!(xs,ys,zeros(4*ind,ind),color=colors,shading=NoShading,colormap=:lightrainbow)
+# contour!(xs,ys,colors,levels=-1e3:200:1e3,color=:azure)
 # Colorbar(fig[1,2], limits=(-50,15), colormap=:haline)
 # Colorbar(fig[1,2], colormap=:haline)
-# save("./png/cook_mix_"*poly*"_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
-# end
+save("./png/cook_mix_"*poly*"_mesh_"*string(ndiv)*"_"*string(nₚ)*".png",fig, px_per_unit = 10.0)
+end
 
 # XLSX.openxlsx("./xlsx/contour.xlsx", mode = "rw") do xf
 #     sheet = xf[1]
@@ -180,4 +184,4 @@ end
 # end
 show(to)
 println(𝑢₂[3])
-# fig
+fig
