@@ -1,9 +1,9 @@
 
 using BenchmarkExample
 import Gmsh: gmsh
-using BubbleMsh
+# using BubbleMsh
 
-n = 64
+# n = 2
 
 # nx = 2
 # filename = "patchtest_"
@@ -19,8 +19,8 @@ n = 64
 # filename = "patchtest_quad_"
 # BenchmarkExample.PatchTest.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=true)
 
-filename = "cook_tri3_"
-BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=false)
+# filename = "cook_tri3_"
+# BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=false)
 
 # filename = "cantilever_tri6_"
 # BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=2)
@@ -33,7 +33,17 @@ BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", tr
 #     BenchmarkExample.CantileverBeam.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = n+1, quad=false, order=1)
 # end
 
-# filename = "plate_with_hole_tri6_"
+# n = 2;c₁ = 1.7000;c₂ = 1.5000;c₃ = 2.0000
+# n = 4;c₁ = 1.257;c₂ = 1.169;c₃ = 1.3514
+# n = 8;c₁ = 1.1145;c₂ = 1.0634;c₃ = 1.1538
+# n = 16;c₁ = 1.0542;c₂ = 1.0279;c₃ = 1.0723
+# n = 32;c₁ = 1.0264;c₂ = 1.01305;c₃ = 1.0351
+# filename = "plate_with_hole_quad_"
+# BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 1, quad=true, mode = 1, coef = (c₁,c₂,c₃))
+# filename = "plate_with_hole_quad8_"
+# BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (2*n+1,n+1), order = 2, quad=true, mode = 1, coef = (c₁,c₂,c₃))
+
+# filename = "plate_with_hole_tri3_"
 # BenchmarkExample.PlateWithHole.generateMsh("./msh/"*filename*string(n)*".msh", transfinite = (n+1,2*n+1), order = 2, mode = 1)
 
 # ndiv = 2
@@ -50,33 +60,36 @@ BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", tr
 # bubblemsh(filename,[2.5,2.5,0.0],[1.5,1.5,0.0],2698-304,0.085,0.07, maxiter=2000)
 
 # n = 8
-# n₁ = 68
-# n₂ = 32
+n₁ = 27
+n₂ = 13
 # n₁ = 2*n
 # n₂ = n
-# c₁ = 1.1145
-# c₂ = 1.0634
-# c₃ = 1.1538
-# dx₁ = 0.25π/n₂
-# dx₂ = 4*(c₁-1)/(c₁^n₁-1)
-# dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
-# dx₄ = 5*(c₂-1)/(c₂^n₂-1)
-# dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
-# err1 = 1 - dx₂/dx₁
-# err2 = 1 - dx₄/dx₃
-# err3 = 1 - dx₅/dx₁
-# if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
+c₁ = 1.0625
+c₂ = 1.0445
+c₃ = 1.0843
+dx₁ = 0.25π/n₂
+dx₂ = 4*(c₁-1)/(c₁^n₁-1)
+dx₃ = 4*(c₁-1)/(c₁^n₁-1)*c₁^(n₁-1)
+dx₄ = 5*(c₂-1)/(c₂^n₂-1)
+dx₅ = 4*2^0.5*(c₃-1)/(c₃^n₁-1)
+err1 = 1 - dx₂/dx₁
+err2 = 1 - dx₄/dx₃
+err3 = 1 - dx₅/dx₁
+if abs(err1) ≤ 1e-3 && abs(err2) ≤ 1e-3 && abs(err3) ≤ 1e-3
     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
-    # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
+    BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃))
+    # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n₂)*"_"*string(n₁)*".msh", transfinite = (n₁+1,n₂+1))
 
-#     BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃),order=1)
-#     println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
-# else
-#     error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
-# end
+#     # BenchmarkExample.PlateWithHole.generateMsh("./msh/plate_with_hole_tri3_"*string(n)*".msh", transfinite = (n₁+1,n₂+1), coef = (c₁,c₂,c₃),order=1)
+    println("error_1 = $err1, error_2 = $err2, error_3 = $err3")
+else
+    error("coefficient = $c₁, $c₂, $c₃ is not proper!, error_1 = $err1, error_2 = $err2, error_3 = $err3")
+end
 
 # 1    -> c₁ = 1.3700, c₂ =       , c₃ = 5.8000
 # 2    -> c₁ = 1.7000, c₂ = 1.5000, c₃ = 2.0000
+# 3-4  -> c₁ = 2.0163, c₂ = 0,7570, c₃ = 2.3400
+# 3-5  -> c₁ = 1.5810, c₂ = 1.0190, c₃ = 1.7800
 # 3    -> c₁ = 1.3700, c₂ = 1.2800, c₃ = 1.5200
 # 3-7  -> c₁ = 1.2500, c₂ = 1.5000, c₃ = 1.3500
 # 3-8  -> c₁ = 1.1800, c₂ = 1.8000, c₃ = 1.2700
@@ -88,6 +101,7 @@ BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", tr
 # 5-9  -> c₁ = 1.2500, c₂ = 1.0400, c₃ = 1.3250
 # 5    -> c₁ = 1.2000, c₂ = 1.1000, c₃ = 1.2500
 # 6    -> c₁ = 1.1500, c₂ = 1.0750, c₃ = 1.2000
+# 6-13 -> c₁ = 1.1327, c₂ = 1.1410, c₃ = 1.1835
 # 7    -> c₁ = 1.13292, c₂ = 1.0754, c₃ = 1.1789
 # 7-15 -> c₁ = 1.1144, c₂ = 1.1098, c₃ = 1.157
 # 7-16 -> c₁ = 1.1100, c₂ = 1.0950, c₃ = 1.1500
@@ -105,7 +119,10 @@ BenchmarkExample.CookMembrane.generateMsh("./msh/"*filename*string(n)*".msh", tr
 # 11   -> c₁ = 1.0800, c₂ = 1.0500, c₃ = 1.1100
 # 12   -> c₁ = 1.0700, c₂ = 1.0500, c₃ = 1.1000
 # 13   -> c₁ = 1.0650, c₂ = 1.0500, c₃ = 1.0900
+# 13-27-> c₁ = 1.0625, c₂ = 1.0455, c₃ = 1.0843
 # 14   -> c₁ = 1.0650, c₂ = 1.0250, c₃ = 1.0800
+# 14-26-> c₁ = 1.0725, c₂ = 1.0155, c₃ = 1.0950
+# 14-27-> c₁ = 1.0672, c₂ = 1.0240, c₃ = 1.0889
 # 15-28-> c₁ = 1.06666, c₂ = 1.0153, c₃ = 1.08738
 # 15-29-> c₁ = 1.06217, c₂ = 1.02275, c₃ = 1.08215
 # 15   -> c₁ = 1.0580, c₂ = 1.0300, c₃ = 1.0774

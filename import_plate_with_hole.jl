@@ -1,4 +1,5 @@
 
+using ApproxOperator.GmshImport: getPhysicalGroups, get𝑿ᵢ, getElements, getPiecewiseElements
 using Gmsh, Statistics
 
 function import_fem(filename::String)
@@ -130,9 +131,9 @@ function import_elasticity_linear_mix(filename1::String,filename2::String,n::Int
     s .*= 1.5
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 2
-    integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 2
+    integrationOrder_Ω = 11
+    integrationOrder_Ωᵍ = 12
+    integrationOrder_Γ = 11
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()
@@ -220,9 +221,9 @@ function import_elasticity_quadratic_mix(filename1::String,filename2::String,n::
     # s = 2.1*(5-2^0.5)/2/n .* ones(length(nodes_p))
     push!(nodes_p,:s₁=>s,:s₂=>s,:s₃=>s)
 
-    integrationOrder_Ω = 4
-    integrationOrder_Ωᵍ = 8
-    integrationOrder_Γ = 4
+    integrationOrder_Ω = 0
+    integrationOrder_Ωᵍ = 12
+    integrationOrder_Γ = 1
 
     gmsh.open(filename1)
     entities = getPhysicalGroups()

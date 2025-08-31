@@ -1,13 +1,13 @@
 
 a = 1.0;
 b = 5.0;
-n = 16;
+// n = 2;c1 = 1.7000;c2 = 1.5000;c3 = 2.0000;
+// n = 4;c1 = 1.257;c2 = 1.169;c3 = 1.3514;
+// n = 8;c1 = 1.1145;c2 = 1.0634;c3 = 1.1538;
+// n = 16;c1 = 1.0542;c2 = 1.0279;c3 = 1.0723;
+n = 32;c1 = 1.0264;c2 = 1.01305;c3 = 1.0351;
 n1 = 2*n;
 n2 = n;
-c1 = 1.0542;
-c2 = 1.0279;
-c3 = 1.0723;
-c = 0.112;
 
 Point(1) = {0.0, 0.0, 0.0};
 Point(2) = {  a, 0.0, 0.0};
@@ -40,14 +40,17 @@ Transfinite Curve{-4} = n1+1 Using Progression c1;
 Transfinite Curve{5,6} = n2+1;
 Transfinite Curve{7} = n1+1 Using Progression c3;
 Transfinite Surface{1};
-Transfinite Surface{2} Right;
+// Transfinite Surface{2} Right;
+Transfinite Surface{2};
 
-Mesh.Algorithm = 1;
+// Mesh.Algorithm = 1;
 // Mesh.MshFileVersion = 2;
-// Mesh.Renumber = 0;
-Mesh.ElementOrder = 2;
-Mesh.SecondOrderLinear = 1;
+// Mesh.Renumber = 1;
 Mesh 2;
-// RefineMesh;
 // RecombineMesh;
+// SetOrder = 2;
+Mesh.SecondOrderIncomplete = 1;
+// RecombineMesh;
+// Mesh.SecondOrderLinear = 2;
 // Mesh.SecondOrderIncomplete = 1;
+// RefineMesh;

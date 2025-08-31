@@ -1,9 +1,9 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
 using CairoMakie, XLSX
+using LinearSolve
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫qpdΩ, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_plate_with_hole.jl")
 
@@ -17,10 +17,11 @@ Hₑ_dev = zeros(nₜ)
 L₂_𝑝   = zeros(nₜ)
 
 for (i,n) in enumerate(indices)
-ps = MKLPardisoSolver()
 
+# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_quad_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
-elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_quad8_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
 
 nₚ = length(nodes_p)
 
@@ -117,7 +118,7 @@ prescribe!(elements["Ωᵍᵘ"],:∂v∂y=>(x,y,z)->∂v∂y(x,y))
 prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 
 𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
-𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
+𝑎ᵖ = ∫qpdΩ=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
@@ -133,14 +134,12 @@ fᵘ = zeros(2*nᵤ)
 𝑏ᵖ(kᵖᵘ)
 𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
-d = zeros(2*nᵤ+nₚ)
 # d = k\f
-
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-pardiso(ps,d,k,f)
+prob = LinearProblem(k,f)
+sol = solve(prob)
+d = sol.u
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]

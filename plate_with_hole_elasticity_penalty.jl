@@ -1,24 +1,27 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
-using CairoMakie
+using LinearSolve
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫qpdΩ, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_plate_with_hole.jl")
 
 const to = TimerOutput()
-ps = MKLPardisoSolver()
 
-ndiv = 2
+ndiv = 8
 @timeit to "import data" begin
-n = 2
+n = 8
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_quad_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
 # nx = 7;ny = 3
 # elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_tri3_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
-elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri6_"*string(n)*".msh",n)
+# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(n)*".msh",n)
+elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_quad8_"*string(ndiv)*".msh","./msh/plate_with_hole_quad_"*string(n)*".msh",n)
 # nx = 68;ny = 32
 # elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_tri6_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
+# nx = 16;ny = 8
+# elements, nodes, nodes_p = import_elasticity_linear_mix("./msh/plate_with_hole_quad_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
+# elements, nodes, nodes_p = import_elasticity_quadratic_mix("./msh/plate_with_hole_quad8_"*string(ndiv)*".msh","./msh/plate_with_hole_tri3_"*string(ny)*"_"*string(nx)*".msh",ny)
 
 nₚ = length(nodes_p)
 end
@@ -72,21 +75,21 @@ v(x,y) = T*a*(1+ν̄)/2/Ē*( -r(x,y)/a*2*ν̄/(1+ν̄)*sin(θ(x,y)) - a/r(x,y)*
 σ₃₃(x,y) = E/(1+ν)/(1-2*ν)*(ν*ε₁₁(x,y) + ν*ε₂₂(x,y))
 σ₁₂(x,y) = E/(1+ν)*ε₁₂(x,y)
 
-∂ε₁₁∂x(x,y) = ∂²u∂x²(x,y)
-∂ε₁₁∂y(x,y) = ∂²u∂x∂y(x,y)
-∂ε₂₂∂x(x,y) = ∂²v∂x∂y(x,y)
-∂ε₂₂∂y(x,y) = ∂²v∂y²(x,y)
-∂ε₁₂∂x(x,y) = 0.5*(∂²u∂x∂y(x,y) + ∂²v∂x²(x,y))
-∂ε₁₂∂y(x,y) = 0.5*(∂²u∂y²(x,y) + ∂²v∂x∂y(x,y))
+# ∂ε₁₁∂x(x,y) = ∂²u∂x²(x,y)
+# ∂ε₁₁∂y(x,y) = ∂²u∂x∂y(x,y)
+# ∂ε₂₂∂x(x,y) = ∂²v∂x∂y(x,y)
+# ∂ε₂₂∂y(x,y) = ∂²v∂y²(x,y)
+# ∂ε₁₂∂x(x,y) = 0.5*(∂²u∂x∂y(x,y) + ∂²v∂x²(x,y))
+# ∂ε₁₂∂y(x,y) = 0.5*(∂²u∂y²(x,y) + ∂²v∂x∂y(x,y))
 
-∂σ₁₁∂x(x,y) = E/(1+ν)/(1-2*ν)*((1-ν)*∂ε₁₁∂x(x,y) + ν*∂ε₂₂∂x(x,y))
-∂σ₁₁∂y(x,y) = E/(1+ν)/(1-2*ν)*((1-ν)*∂ε₁₁∂y(x,y) + ν*∂ε₂₂∂y(x,y))
-∂σ₂₂∂x(x,y) = E/(1+ν)/(1-2*ν)*(ν*∂ε₁₁∂x(x,y) + (1-ν)*∂ε₂₂∂x(x,y))
-∂σ₂₂∂y(x,y) = E/(1+ν)/(1-2*ν)*(ν*∂ε₁₁∂y(x,y) + (1-ν)*∂ε₂₂∂y(x,y))
-∂σ₁₂∂x(x,y) = E/(1+ν)*∂ε₁₂∂x(x,y)
-∂σ₁₂∂y(x,y) = E/(1+ν)*∂ε₁₂∂y(x,y)
-b₁(x,y) = -∂σ₁₁∂x(x,y) - ∂σ₁₂∂y(x,y)
-b₂(x,y) = -∂σ₁₂∂x(x,y) - ∂σ₂₂∂y(x,y)
+# ∂σ₁₁∂x(x,y) = E/(1+ν)/(1-2*ν)*((1-ν)*∂ε₁₁∂x(x,y) + ν*∂ε₂₂∂x(x,y))
+# ∂σ₁₁∂y(x,y) = E/(1+ν)/(1-2*ν)*((1-ν)*∂ε₁₁∂y(x,y) + ν*∂ε₂₂∂y(x,y))
+# ∂σ₂₂∂x(x,y) = E/(1+ν)/(1-2*ν)*(ν*∂ε₁₁∂x(x,y) + (1-ν)*∂ε₂₂∂x(x,y))
+# ∂σ₂₂∂y(x,y) = E/(1+ν)/(1-2*ν)*(ν*∂ε₁₁∂y(x,y) + (1-ν)*∂ε₂₂∂y(x,y))
+# ∂σ₁₂∂x(x,y) = E/(1+ν)*∂ε₁₂∂x(x,y)
+# ∂σ₁₂∂y(x,y) = E/(1+ν)*∂ε₁₂∂y(x,y)
+# b₁(x,y) = -∂σ₁₁∂x(x,y) - ∂σ₁₂∂y(x,y)
+# b₂(x,y) = -∂σ₁₂∂x(x,y) - ∂σ₂₂∂y(x,y)
 p(x,y) = (σ₁₁(x,y)+σ₂₂(x,y)+σ₃₃(x,y))/3
 
 prescribe!(elements["Ωᵘ"],:E=>(x,y,z)->E)
@@ -95,8 +98,8 @@ prescribe!(elements["Ωᵖ"],:E=>(x,y,z)->E)
 prescribe!(elements["Ωᵖ"],:ν=>(x,y,z)->ν)
 prescribe!(elements["Ωᵍᵘ"],:E=>(x,y,z)->E)
 prescribe!(elements["Ωᵍᵘ"],:ν=>(x,y,z)->ν)
-prescribe!(elements["Ωᵘ"],:b₁=>(x,y,z)->b₁(x,y))
-prescribe!(elements["Ωᵘ"],:b₂=>(x,y,z)->b₂(x,y))
+# prescribe!(elements["Ωᵘ"],:b₁=>(x,y,z)->b₁(x,y))
+# prescribe!(elements["Ωᵘ"],:b₂=>(x,y,z)->b₂(x,y))
 prescribe!(elements["Γᵗ"],:t₁=>(x,y,z,n₁,n₂)->σ₁₁(x,y)*n₁+σ₁₂(x,y)*n₂)
 prescribe!(elements["Γᵗ"],:t₂=>(x,y,z,n₁,n₂)->σ₁₂(x,y)*n₁+σ₂₂(x,y)*n₂) 
 # prescribe!(elements["Γᵗ"],:α=>(x,y,z)->1e12)
@@ -122,7 +125,7 @@ prescribe!(elements["Ωᵍᵘ"],:∂v∂y=>(x,y,z)->∂v∂y(x,y))
 prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->p(x,y))
 
 𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
-𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
+𝑎ᵖ = ∫qpdΩ=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
@@ -144,14 +147,12 @@ fᵘ = zeros(2*nᵤ)
 𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
 end
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
-f = [-fᵘ;fᵖ]
-d = zeros(2*nᵤ+nₚ)
-# d = k\f
 
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-@timeit to "solve" pardiso(ps,d,k,f)
+k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
+f = [-fᵘ;fᵖ]
+prob = LinearProblem(k,f)
+sol = solve(prob)
+d = sol.u
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]
@@ -166,10 +167,15 @@ Hₑ_dev = Hₑ_PlaneStrain_Deviatoric(elements["Ωᵍᵘ"])
 L₂_𝑝 = L₂𝑝(elements["Ωᵍᵖ"])
 end
 
-println(log10(L₂_𝒖))
-println(log10(Hₑ_𝒖))
-println(log10(Hₑ_dev))
-println(log10(L₂_𝑝))
+# println(log10(L₂_𝒖))
+# println(log10(Hₑ_𝒖))
+# println(log10(Hₑ_dev))
+# println(log10(L₂_𝑝))
+
+println(L₂_𝒖)
+println(Hₑ_𝒖)
+println(Hₑ_dev)
+println(L₂_𝑝)
 
 # @timeit to "plot figure" begin
 # fig = Figure()

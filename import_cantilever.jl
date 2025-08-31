@@ -1,4 +1,5 @@
 
+using ApproxOperator.GmshImport: getPhysicalGroups, get𝑿ᵢ, getElements, getPiecewiseElements
 using Gmsh, Statistics
 
 function import_fem(filename::String)
@@ -15,11 +16,11 @@ function import_fem(filename::String)
     elements["Γᵍ"] = getElements(nodes,entities["Γᵍ"],normal=true)
     elements["Γʳ"] = getElements(nodes,entities["Γʳ"],normal=true)
 
-    push!(elements["Ω"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
-    push!(elements["Ωᵍ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
-    push!(elements["Γᵗ"],:𝝭)
-    push!(elements["Γᵍ"],:𝝭)
-    push!(elements["Γʳ"],:𝝭)
+    # push!(elements["Ω"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    # push!(elements["Ωᵍ"],:𝝭,:∂𝝭∂x,:∂𝝭∂y)
+    # push!(elements["Γᵗ"],:𝝭)
+    # push!(elements["Γᵍ"],:𝝭)
+    # push!(elements["Γʳ"],:𝝭)
 
     gmsh.finalize()
 
@@ -50,7 +51,7 @@ function import_linear_mix(filename1::String,filename2::String,nx,ny)
     s₂ = s*12.0/ny*ones(length(nodes_p))
     push!(nodes_p,:s₁=>s₁,:s₂=>s₂,:s₃=>s₂)
 
-    integrationOrder_Ω = 3
+    integrationOrder_Ω = 2
     integrationOrder_Ωᵍ = 8
     integrationOrder_Γ = 2
 
@@ -105,20 +106,20 @@ function import_linear_mix(filename1::String,filename2::String,nx,ny)
     set𝝭!(elements["Γᵍᵖ"])
 
     # types = PiecewisePolynomial{:Constant}
-    types = PiecewisePolynomial{:Linear2D}
-    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
-    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
-    elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
-    push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["∂Ωˢ"], :𝝭)
+    # types = PiecewisePolynomial{:Linear2D}
+    # elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
+    # elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
+    # elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
+    # push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # push!(elements["∂Ωˢ"], :𝝭)
 
-    set∇𝝭!(elements["Ωˢ"])
-    set𝝭!(elements["∂Ωˢ"])
+    # set∇𝝭!(elements["Ωˢ"])
+    # set𝝭!(elements["∂Ωˢ"])
 
-    typeb = PiecewiseParametric{:Bubble,:Tri3}
-    elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],typeb,integrationOrder_Ω)
-    push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    set∇𝝭!(elements["Ωᵇ"])
+    # typeb = PiecewiseParametric{:Bubble,:Tri3}
+    # elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],typeb,integrationOrder_Ω)
+    # push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # set∇𝝭!(elements["Ωᵇ"])
 
     gmsh.finalize()
 
@@ -203,20 +204,20 @@ function import_quadratic_mix(filename1::String,filename2::String,nx,ny)
     set𝝭!(elements["∂Ωᵖ"])
 
     # types = PiecewisePolynomial{:Constant}
-    types = PiecewisePolynomial{:Linear2D}
-    elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
-    elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
-    elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
-    push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    push!(elements["∂Ωˢ"], :𝝭)
+    # types = PiecewisePolynomial{:Linear2D}
+    # elements["Ωˢ"] = getPiecewiseElements(entities["Ω"], types, integrationOrder_Ω)
+    # elements["∂Ωˢ"] = getPiecewiseBoundaryElements(entities["Γ"], entities["Ω"], types, integrationOrder_Γ)
+    # elements["Γᵍˢ"] = getElements(entities["Γᵍ"],entities["Γ"], elements["∂Ωˢ"])
+    # push!(elements["Ωˢ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # push!(elements["∂Ωˢ"], :𝝭)
 
-    set∇𝝭!(elements["Ωˢ"])
-    set𝝭!(elements["∂Ωˢ"])
+    # set∇𝝭!(elements["Ωˢ"])
+    # set𝝭!(elements["∂Ωˢ"])
 
-    typeb = PiecewiseParametric{:Bubble,:Tri3}
-    elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],typeb,integrationOrder_Ω)
-    push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
-    set∇𝝭!(elements["Ωᵇ"])
+    # typeb = PiecewiseParametric{:Bubble,:Tri3}
+    # elements["Ωᵇ"] = getPiecewiseElements(entities["Ω"],typeb,integrationOrder_Ω)
+    # push!(elements["Ωᵇ"], :𝝭, :∂𝝭∂x, :∂𝝭∂y)
+    # set∇𝝭!(elements["Ωᵇ"])
 
     gmsh.finalize()
 

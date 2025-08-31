@@ -1,15 +1,15 @@
 using Revise
 using TimerOutputs 
-using SparseArrays, Pardiso
-using CairoMakie, XLSX
+using XLSX
+using LinearSolve
 using ApproxOperator
-using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫∫qpdxdy, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
+using ApproxOperator.Elasticity: ∫∫εᵈᵢⱼσᵈᵢⱼdxdy, ∫qpdΩ, ∫∫p∇udxdy, ∫vᵢgᵢds, ∫∫vᵢbᵢdxdy, ∫vᵢtᵢds, L₂, L₂𝑝, Hₑ_PlaneStress, Hₑ_PlaneStrain_Deviatoric
 
 include("import_cantilever.jl")
 
-ndiv = 16
+ndiv = 4
 
-indices = 50:60
+indices = 2:3
 nₜ = length(indices)
 L₂_𝒖   = zeros(nₜ)
 Hₑ_𝒖   = zeros(nₜ)
@@ -17,13 +17,16 @@ Hₑ_dev = zeros(nₜ)
 L₂_𝑝   = zeros(nₜ)
 
 for (i,n) in enumerate(indices)
-ps = MKLPardisoSolver()
 
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_tri3_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_tri6_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
 # elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_"*string(n)*".msh",4*n,n)
-nx = n
-ny = 16
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+# nx = n
+# ny = 31
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_tri3_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/cantilever_quad_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
+# elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_tri6_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 # elements, nodes, nodes_p, sp, type = import_quadratic_mix("./msh/cantilever_quad8_"*string(ndiv)*".msh","./msh/cantilever_"*string(ny)*"_"*string(nx)*".msh",nx,ny)
 nₚ = length(nodes_p)
 
@@ -147,7 +150,7 @@ prescribe!(elements["Ωᵍᵖ"],:p=>(x,y,z)->(σ₁₁(x,y)+σ₂₂(x,y)+σ₃�
 ## End debug
 
 𝑎ᵘ = ∫∫εᵈᵢⱼσᵈᵢⱼdxdy=>elements["Ωᵘ"]
-𝑎ᵖ = ∫∫qpdxdy=>elements["Ωᵖ"]
+𝑎ᵖ = ∫qpdΩ=>elements["Ωᵖ"]
 𝑏ᵖ = ∫∫p∇udxdy=>(elements["Ωᵖ"],elements["Ωᵘ"])
 𝑎ᵘᵅ = ∫vᵢgᵢds=>elements["Γᵍᵘ"]
 𝑓 = ∫vᵢtᵢds=>elements["Γᵗ"]
@@ -176,14 +179,13 @@ fᵘ = zeros(2*nᵤ)
 𝑎ᵘᵅ(kᵘᵘ,fᵘ)
 𝑓(fᵘ)
 
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+k =[-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
 f = [-fᵘ;fᵖ]
 d = zeros(2*nᵤ+nₚ)
 # d = k\f
-
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-pardiso(ps,d,k,f)
+prob = LinearProblem(k,f)
+sol = solve(prob)
+d = sol.u
 
 𝑢₁ = d[1:2:2*nᵤ]
 𝑢₂ = d[2:2:2*nᵤ]

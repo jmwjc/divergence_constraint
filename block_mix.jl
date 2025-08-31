@@ -1,28 +1,29 @@
 
 using TimerOutputs 
-using Pardiso
+# using Pardiso
 using SparseArrays, LinearAlgebra
-using SharedArrays, Distributed
+# using SharedArrays, Distributed
+using LinearSolve
 using WriteVTK
 using ApproxOperator
 using ApproxOperator.Elasticity: ∫qpdΩ, ∫εᵈᵢⱼσᵈᵢⱼdΩ, ∫p∇udΩ, ∫vᵢbᵢdΩ, ∫vᵢtᵢdΓ, ∫vᵢgᵢdΓ, Hₑ
 
 # addprocs(3)
 # println(nprocs())
-println(Threads.nthreads())
+# println(Threads.nthreads())
 
 include("import_block.jl")
 
 const to = TimerOutput()
-ps = MKLPardisoSolver()
+# ps = MKLPardisoSolver()
 
-ndiv = 4
+ndiv = 8
 ndiv_p = 4
-# poly = "tet4"
-poly = "hex8"
+poly = "tet4"
+# poly = "hex8"
 @timeit to "import data" begin
-# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
-elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_hex8_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
+elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
+# elements, nodes, nodes_p, sp, type = import_linear_mix("./msh/block_hex8_"*string(ndiv)*".msh","./msh/block_"*string(ndiv_p)*".msh",ndiv_p)
 end
 
 nᵤ = length(nodes)
@@ -30,7 +31,7 @@ nₚ = length(nodes_p)
 
 E = 240.56839
 ν = 0.5-1e-8
-P = 80.0
+P = 240.0
 
 n₁₁(n₁,n₂,n₃) = n₃ ≈ 1.0 || n₁ ≈ -1.0 ? 1.0 : 0.0
 n₂₂(n₁,n₂,n₃) = n₃ ≈ 1.0 || n₂ ≈ -1.0 ? 1.0 : 0.0
@@ -234,61 +235,77 @@ fᵘ = zeros(3*nᵤ)
 𝑎ᵖ(kᵖᵖ)
 𝑏ᵖ(kᵖᵘ)
 𝑎ᵅ(kᵘᵘ,fᵘ)
-𝑓(fᵘ)
+# 𝑓(fᵘ)
 end
 
-k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
+for P in [80.0,160,240,320]
+    prescribe!(elements["Γᵗ"],:t₃=>(x,y,z)->-P)
+    fᵘ = zeros(3*nᵤ)
+    𝑓(fᵘ)
+    k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
+    f = [-fᵘ;fᵖ]
+    prob = LinearProblem(k,f)
+    sol = solve(prob)
+    d = sol.u
+    println(d[15])
+end
+# k =sparse([-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ])
 # k = [-kᵘᵘ kᵖᵘ';kᵖᵘ kᵖᵖ]
-f = [-fᵘ;fᵖ]
-d = zeros(3*nᵤ+nₚ)
+# f = [-fᵘ;fᵖ]
+# d = zeros(3*nᵤ+nₚ)
 
-set_matrixtype!(ps, -2)
-k = get_matrix(ps,k,:N)
-@timeit to "solve" pardiso(ps,d,k,f)
+# set_matrixtype!(ps, -2)
+# k = get_matrix(ps,k,:N)
+# @timeit to "solve" pardiso(ps,d,k,f)
+# @timeit to "solve" d = k\f
 # d = k\f
 
-𝑢₁ = d[1:3:3*nᵤ]
-𝑢₂ = d[2:3:3*nᵤ]
-𝑢₃ = d[3:3:3*nᵤ]
-𝑝 = d[3*nᵤ+1:3*nᵤ+nₚ]
-push!(nodes,:u₁=>𝑢₁,:u₂=>𝑢₂,:u₃=>𝑢₃)
-push!(nodes_p,:p=>𝑝)
+# prob = LinearProblem(k,f)
+# @timeit to "solve" sol = solve(prob)
+# d = sol.u
+
+# 𝑢₁ = d[1:3:3*nᵤ]
+# 𝑢₂ = d[2:3:3*nᵤ]
+# 𝑢₃ = d[3:3:3*nᵤ]
+# 𝑝 = d[3*nᵤ+1:3*nᵤ+nₚ]
+# push!(nodes,:u₁=>𝑢₁,:u₂=>𝑢₂,:u₃=>𝑢₃)
+# push!(nodes_p,:p=>𝑝)
 # Hₑ_𝒖, L₂_𝒖 = Hₑ(elements["Ωᵍᵘ"])
 
 
 # println(log10(L₂_𝒖))
 # println(log10(Hₑ_𝒖))
 
-colors = zeros(nᵤ)
-𝗠 = zeros(10)
-for (i,node) in enumerate(nodes)
-    x = node.x
-    y = node.y
-    z = node.z
-    indices = sp(x,y,z)
-    ni = length(indices)
-    𝓒 = [nodes_p[i] for i in indices]
-    data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[z]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
-    ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
-    𝓖 = [ξ]
-    a = type(𝓒,𝓖)
-    set𝝭!(a)
-    p = 0.0
-    N = ξ[:𝝭]
-    for (k,xₖ) in enumerate(𝓒)
-        p += N[k]*xₖ.p
-    end
-    colors[i] = p
-end
-α = 1.0
-points = [[node.x+α*node.u₁ for node in nodes]';[node.y+α*node.u₂ for node in nodes]';[node.z+α*node.u₃ for node in nodes]']
-# cells = [MeshCell(VTKCellTypes.VTK_TETRA,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-cells = [MeshCell(VTKCellTypes.VTK_HEXAHEDRON,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
-vtk_grid("./vtk/block_"*poly*"_"*string(ndiv)*"_"*string(nₚ),points,cells) do vtk
-    vtk["u"] = (𝑢₁,𝑢₂,𝑢₃)
-    vtk["𝑝"] = colors
-end
+# colors = zeros(nᵤ)
+# 𝗠 = zeros(10)
+# for (i,node) in enumerate(nodes)
+#     x = node.x
+#     y = node.y
+#     z = node.z
+#     indices = sp(x,y,z)
+#     ni = length(indices)
+#     𝓒 = [nodes_p[i] for i in indices]
+#     data = Dict([:x=>(2,[x]),:y=>(2,[y]),:z=>(2,[z]),:𝝭=>(4,zeros(ni)),:𝗠=>(0,𝗠)])
+#     ξ = 𝑿ₛ((𝑔=1,𝐺=1,𝐶=1,𝑠=0), data)
+#     𝓖 = [ξ]
+#     a = type(𝓒,𝓖)
+#     set𝝭!(a)
+#     p = 0.0
+#     N = ξ[:𝝭]
+#     for (k,xₖ) in enumerate(𝓒)
+#         p += N[k]*xₖ.p
+#     end
+#     colors[i] = p
+# end
+# α = 1.0
+# points = [[node.x+α*node.u₁ for node in nodes]';[node.y+α*node.u₂ for node in nodes]';[node.z+α*node.u₃ for node in nodes]']
+# # cells = [MeshCell(VTKCellTypes.VTK_TETRA,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# cells = [MeshCell(VTKCellTypes.VTK_HEXAHEDRON,[xᵢ.𝐼 for xᵢ in elm.𝓒]) for elm in elements["Ωᵘ"]]
+# vtk_grid("./vtk/block_"*poly*"_"*string(ndiv)*"_"*string(nₚ),points,cells) do vtk
+#     vtk["u"] = (𝑢₁,𝑢₂,𝑢₃)
+#     vtk["𝑝"] = colors
+# end
 
-println(nodes[5])
+# println(nodes[5].u₃)
 
 show(to)
